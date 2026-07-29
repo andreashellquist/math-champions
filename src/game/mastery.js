@@ -169,7 +169,10 @@ export function applyAnswer(state, { fact, correct, latencyMs = 0, errorFamily =
     next = [newBox, n + MIN_REQUEUE_GAP, 0, misses + 1]
   }
 
-  const recent = [...(state.r[fact.op] ?? []), correct ? 1 : 0].slice(-WINDOW)
+  // First-attempt only. A rebound is real learning but it is not a first-try
+  // correct, and this series feeds the Shootout gate, strand opening, new-fact
+  // introduction, and a parent-facing "right on the first try" figure.
+  const recent = [...(state.r[fact.op] ?? []), correct && !secondAttempt ? 1 : 0].slice(-WINDOW)
   const errors = errorFamily ? [...state.e, errorFamily].slice(-ERROR_MEMORY) : state.e
 
   return {

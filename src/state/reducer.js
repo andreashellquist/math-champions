@@ -53,6 +53,45 @@ function newlyUnlocked(before, after) {
   })
 }
 
+/**
+ * Resolve a kick as a miss: record it, requeue the fact if there's room, and
+ * take the shot. Shared by the acknowledged reveal and by the path that skips
+ * the reveal entirely when a requeue can't fire.
+ */
+function resolveAsMiss(state, r, diagnosis, { requeue }) {
+  const mastery = applyAnswer(state.mastery, {
+    fact: r.fact, correct: false, latencyMs: 0,
+    errorFamily: diagnosis?.family ?? null,
+  })
+  const trajectory = trajectoryFor(r.kickIdx, r.question.ans)
+
+  let queue = r.queue
+  if (requeue) {
+    const at = r.kickIdx + MIN_REQUEUE_GAP
+    if (at < queue.length && !queue.slice(r.kickIdx + 1).some(f => f.key === r.fact.key)) {
+      queue = [...queue]
+      queue.splice(at, 0, { ...r.fact, role: 'requeue' })
+    }
+  }
+
+  return {
+    ...state,
+    mastery,
+    round: {
+      ...r,
+      queue,
+      phase: 'resolving',
+      streak: 0,
+      brainPoints: r.brainPoints + 1,
+      results: [...r.results, 'miss'],
+      diagnosis,
+      requeued: requeue,
+      trajectory,
+      dive: diveFor(trajectory, false),
+    },
+  }
+}
+
 /* ── REDUCER ───────────────────────────────────────────────── */
 
 export function reducer(state, action) {
@@ -126,6 +165,18 @@ export function reducer(state, action) {
 
       /* ── Attempt 2 was also wrong: show the answer and require a tap ── */
       if (!correct && r.phase === 'rebound') {
+        // A frustrated child's next tap is often a fast re-tap on a neighbouring
+        // button. Without this, that instantly burns the second attempt.
+        if (action.at - (r.reboundAt ?? 0) < 250) return state
+
+        const diagnosis = classifyChoice(action.value, question.hintFact ?? question)
+
+        // The requeue is the actual learning mechanism, and it can only fire
+        // with kicks left to insert into. On the last few kicks the reveal
+        // holds the child in place and buys nothing — so skip it there.
+        const canRequeue = r.kickIdx + MIN_REQUEUE_GAP < r.queue.length
+        if (!canRequeue) return resolveAsMiss(state, r, diagnosis, { requeue: false })
+
         return {
           ...state,
           round: {
@@ -133,7 +184,7 @@ export function reducer(state, action) {
             phase: 'reveal',
             chosen: action.value,
             disabled: [...r.disabled, action.value],
-            diagnosis: classifyChoice(action.value, question.hintFact ?? question),
+            diagnosis,
           },
         }
       }
@@ -150,6 +201,7 @@ export function reducer(state, action) {
             disabled: [action.value],
             hint: getHint(question.hintFact ?? question),
             diagnosis: classifyChoice(action.value, question.hintFact ?? question),
+            reboundAt: action.at,
             deadline: null,          // the rebound is never timed
             streak: 0,
           },
@@ -208,43 +260,11 @@ export function reducer(state, action) {
       }
     }
 
-    /* ── The child tapped the revealed correct answer ── */
+    /* ── The reveal is done: tapped by the child, or auto-resolved ── */
     case 'ACKNOWLEDGE_REVEAL': {
       const r = state.round
       if (!r || r.phase !== 'reveal') return state
-
-      const mastery = applyAnswer(state.mastery, {
-        fact: r.fact,
-        correct: false,
-        latencyMs: 0,
-        errorFamily: r.diagnosis?.family ?? null,
-      })
-      const trajectory = trajectoryFor(r.kickIdx, r.question.ans)
-
-      // Bring the missed fact back later in the round. Re-asking it
-      // immediately would measure echoic memory rather than learning, so it
-      // goes two kicks downstream, not the next one.
-      const requeueAt = r.kickIdx + MIN_REQUEUE_GAP
-      const queue = [...r.queue]
-      if (requeueAt < queue.length && !queue.slice(r.kickIdx + 1).some(f => f.key === r.fact.key)) {
-        queue.splice(requeueAt, 0, { ...r.fact, role: 'requeue' })
-      }
-
-      return {
-        ...state,
-        mastery,
-        round: {
-          ...r,
-          queue,
-          phase: 'resolving',
-          goals: r.goals,
-          streak: 0,
-          brainPoints: r.brainPoints + 1,
-          results: [...r.results, 'miss'],
-          trajectory,
-          dive: diveFor(trajectory, false),
-        },
-      }
+      return resolveAsMiss(state, r, r.diagnosis, { requeue: true })
     }
 
     /* ── Shootout: the whistle went before an answer ── */

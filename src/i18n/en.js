@@ -41,6 +41,8 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    tapNext: 'Tap for next →',
+    stopHere: '👋 Done for now',
     showTrick: '🧠 Give me a tip!',
     clockOff: '🏳️ Take it off the clock',
     paused: 'Paused',

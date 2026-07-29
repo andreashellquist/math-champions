@@ -175,3 +175,88 @@ describe('unlocks', () => {
     expect(s1.toast).toBeNull()
   })
 })
+
+describe('attention and frustration guards', () => {
+  it('skips the reveal when a requeue cannot fire', () => {
+    // The requeue is the learning mechanism, and it needs kicks left to insert
+    // into. On the last few kicks the reveal used to hold the child in place
+    // and buy nothing.
+    const s0 = roundInProgress({ kickIdx: 3 })
+    const q = s0.round.question
+    const [w1, w2] = q.opts.filter(o => o !== q.ans)
+
+    const s1 = reducer(s0, { type: 'ANSWER', value: w1, at: 2000 })
+    const s2 = reducer(s1, { type: 'ANSWER', value: w2, at: 3000 })
+
+    expect(s2.round.phase).toBe('resolving')       // not held in `reveal`
+    expect(s2.round.results).toEqual(['miss'])
+    expect(s2.round.requeued).toBe(false)
+    expect(s2.mastery.f[FACT.key][3]).toBe(1)      // still recorded as a miss
+  })
+
+  it('still holds the reveal early in the round, where the requeue works', () => {
+    const s0 = roundInProgress({ kickIdx: 0 })
+    const q = s0.round.question
+    const [w1, w2] = q.opts.filter(o => o !== q.ans)
+
+    const s2 = reducer(reducer(s0, { type: 'ANSWER', value: w1, at: 2000 }),
+      { type: 'ANSWER', value: w2, at: 3000 })
+    expect(s2.round.phase).toBe('reveal')
+  })
+
+  it('ignores a fast re-tap that would burn the second attempt', () => {
+    // A frustrated child's next tap is often an immediate re-tap on a
+    // neighbouring button. That should not cost them the rebound.
+    const s0 = roundInProgress()
+    const q = s0.round.question
+    const [w1, w2] = q.opts.filter(o => o !== q.ans)
+
+    const s1 = reducer(s0, { type: 'ANSWER', value: w1, at: 2000 })
+    expect(s1.round.phase).toBe('rebound')
+
+    const tooFast = reducer(s1, { type: 'ANSWER', value: w2, at: 2100 })
+    expect(tooFast).toBe(s1)                        // no-op
+
+    const deliberate = reducer(s1, { type: 'ANSWER', value: w2, at: 2400 })
+    expect(deliberate.round.phase).toBe('reveal')
+  })
+
+  it('resolves the reveal identically however it was dismissed', () => {
+    // The auto-resolve after 4s dispatches the same action as the tap, so the
+    // pedagogy cannot differ between a child who complies and one who doesn't.
+    const s0 = roundInProgress({ kickIdx: 0 })
+    const q = s0.round.question
+    const [w1, w2] = q.opts.filter(o => o !== q.ans)
+    const revealed = reducer(reducer(s0, { type: 'ANSWER', value: w1, at: 2000 }),
+      { type: 'ANSWER', value: w2, at: 3000 })
+
+    const after = reducer(revealed, { type: 'ACKNOWLEDGE_REVEAL' })
+    expect(after.round.results).toEqual(['miss'])
+    expect(after.round.requeued).toBe(true)
+    expect(after.round.queue.length).toBe(revealed.round.queue.length + 1)
+  })
+})
+
+describe('first-try accuracy is not inflated by rebounds', () => {
+  it('records a rebound as a miss in the recent-outcome series', () => {
+    // This series drives the Shootout gate, strand opening, new-fact
+    // introduction, and a parent-facing "right on the first try" figure — a
+    // rebound counted as correct made all four wrong, and the last one false.
+    const s0 = roundInProgress()
+    const q = s0.round.question
+    const wrong = q.opts.find(o => o !== q.ans)
+
+    const s2 = reducer(reducer(s0, { type: 'ANSWER', value: wrong, at: 2000 }),
+      { type: 'ANSWER', value: q.ans, at: 3000 })
+
+    expect(s2.round.goals).toBe(1)                  // full credit in the fiction
+    expect(s2.mastery.r.addition.at(-1)).toBe(0)    // honest in the data
+    expect(s2.mastery.agg.correct).toBe(0)
+  })
+
+  it('records a clean first-try answer as correct', () => {
+    const s0 = roundInProgress()
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 2000 })
+    expect(s1.mastery.r.addition.at(-1)).toBe(1)
+  })
+})

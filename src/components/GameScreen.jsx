@@ -11,8 +11,29 @@ import Goal from './Goal'
 import Confetti from './Confetti'
 import HintCard from './HintCard'
 
-/** Beats, in ms. Reduced-motion shortens them so the game doesn't drag. */
-const BEATS = { windup: 180, resolve: 880, next: 1900, nextTimeout: 2300 }
+/**
+ * Beats, in ms.
+ *
+ * These were nearly twice as long, which meant ~1.9s per kick — about 14% of a
+ * session — where the child physically could not act. The informational
+ * feedback is already at 0ms (the button turns green, the wrong option greys
+ * out); everything after that is reward theatre, so it isn't protected by the
+ * perception floor.
+ *
+ * `resolve` MUST match the `.ball.shoot` duration in App.css, which it
+ * previously didn't — the ball landed 180ms before the game reacted to it.
+ *
+ * Floors, below which the outcome stops registering as caused by the child:
+ * 350ms of outcome on screen, 250ms before a skip gesture is accepted, 600ms
+ * to read a short feedback line.
+ */
+const BEATS = {
+  resolve:     420,   // ball flight — keep in sync with .ball.shoot
+  next:        1020,  // flight + 600ms to read the feedback
+  nextTimeout: 1250,  // longer copy, and a retake needs understanding
+  nextReveal:  1400,  // the one beat genuinely worth keeping long
+  skipFloor:   250,   // below this, a stage tap is the answer tap bouncing
+}
 
 const prefersReducedMotion = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -25,6 +46,7 @@ export default function GameScreen() {
   const [urgency, setUrgency] = useState(0)
   const [line, setLine] = useState(null)
   const questionRef = useRef(null)
+  const skipArmedAt = useRef(null)
 
   /* Every timeout goes through here so they can all be cancelled on unmount.
      The old code created four bare setTimeouts per kick with no handles, so
@@ -98,9 +120,30 @@ export default function GameScreen() {
       dispatch({ type: 'CELEBRATE' })
     }, flight)
 
-    const hold = reduced ? 700 : timedOut ? BEATS.nextTimeout : BEATS.next
+    const missed = r.results.at(-1) === 'miss'
+    const hold = reduced ? 700
+      : timedOut ? BEATS.nextTimeout
+      : missed ? BEATS.nextReveal
+      : BEATS.next
     schedule(advance, hold)
+
+    // Let the child outrun the animation. This is a self-pacing device, not a
+    // shortcut: a child who taps has told us they don't need the beat, and a
+    // child who wants to watch the goal still watches it.
+    skipArmedAt.current = performance.now() + BEATS.skipFloor
+    return () => { skipArmedAt.current = null }
   }, [r?.phase, r?.kickIdx])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Auto-resolve the reveal. The retrieval attempt has already been made twice;
+     the third tap is encoding support, and encoding support a child refuses is
+     worth nothing. So it becomes an invitation with a deadline rather than a
+     gate they cannot pass. The mastery consequence is identical either way. */
+  useEffect(() => {
+    if (r?.phase !== 'reveal') return
+    const id = setTimeout(() => dispatch({ type: 'ACKNOWLEDGE_REVEAL' }), 4000)
+    timers.current.push(id)
+    return () => clearTimeout(id)
+  }, [r?.phase, r?.kickIdx, dispatch])
 
   /* Focus the question, not an answer button — a screen reader user should
      hear the problem before the options. */
@@ -131,6 +174,16 @@ export default function GameScreen() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [r, answer, dispatch, shootout, extend])
+
+  /** Tap the pitch to move on. Armed 250ms in, so it can't be the answer tap
+      bouncing. Never armed during `reveal` — that beat is already tap-gated. */
+  const skipAhead = useCallback(() => {
+    if (!skipArmedAt.current || performance.now() < skipArmedAt.current) return
+    skipArmedAt.current = null
+    clearTimers()
+    if (r?.phase === 'resolving') dispatch({ type: 'CELEBRATE' })
+    advance()
+  }, [r?.phase, advance, dispatch, clearTimers])
 
   if (!r) return null
 
@@ -168,6 +221,7 @@ export default function GameScreen() {
     : 'ball'
 
   const feedback = buildFeedback(r)
+  const skippable = phase === 'resolving' || phase === 'celebrating'
 
   function answerState(opt) {
     if (phase === 'reveal' && opt === question.ans) return 'reveal'
@@ -191,14 +245,23 @@ export default function GameScreen() {
           aria-label={t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
         >
           {Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
-            <div key={i} className={`dot ${r.results[i] ?? ''}`} aria-hidden="true" />
+            <div
+              key={i}
+              className={`dot ${r.results[i] ?? ''}${i === r.kickIdx ? ' current' : ''}`}
+              aria-hidden="true"
+            />
           ))}
         </div>
-        <span>{t('game.kickOf', { n: r.kickIdx + 1, total: totalKicks })}</span>
       </div>
 
       {/* Pitch */}
-      <div className={`stage${phase === 'celebrating' && r.results.at(-1) !== 'miss' ? ' shake' : ''}`}>
+      <div
+        className={`stage${phase === 'celebrating' && r.results.at(-1) !== 'miss' ? ' shake' : ''}`}
+        onClick={skipAhead}
+        role={skippable ? 'button' : undefined}
+        tabIndex={skippable ? 0 : undefined}
+        aria-label={skippable ? t('game.tapNext') : undefined}
+      >
         {shootout && (
           <div className="shot-clock" aria-hidden="true" data-urgency={urgency}>
             <div className="shot-clock-fill" ref={barRef} />
@@ -225,12 +288,10 @@ export default function GameScreen() {
 
           <div className="grass" />
           <div className="penalty-spot" />
+          {skippable && <span className="skip-hint">{t('game.tapNext')}</span>}
         </div>
       </div>
 
-      {r.mode === 'fixture' && r.kickIdx === 0 && phase === 'asking' && (
-        <p className="derby-note">{t('fixture.picked', { rival: t(rival.nameKey) })}</p>
-      )}
       {line && <p className="banter">{line}</p>}
 
       {/* Question */}

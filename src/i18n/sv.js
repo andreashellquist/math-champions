@@ -49,6 +49,8 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    tapNext: 'Tryck för nästa →',
+    stopHere: '👋 Klar för nu',
     showTrick: '🧠 Tipsa mig!',
     clockOff: '🏳️ Ta bort klockan',
     paused: 'Pausad',

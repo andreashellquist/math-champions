@@ -340,7 +340,10 @@ body::before {
 .dot.goal         { background: var(--gold);  border-color: var(--gold-deep); }
 .dot.rebound      { background: #7fd4a0; border-color: #2e8f5b; }
 .dot.timeout-goal { background: #b9e0f7; border-color: #4a90b8; }
-.dot.miss         { background: #c86a6a; border-color: #8a3a3a; }
+/* Neutral, not red. This dot persists in the round bar for the rest of the
+   round — a red one is a standing failure record in the most-scanned part of
+   the screen, which is exactly what the no-red rule exists to prevent. */
+.dot.miss         { background: #e8e8e8; border-color: #c0c0c0; }
 
 .stage {
   width: 100%;
@@ -351,7 +354,9 @@ body::before {
   margin-bottom: 12px;
   position: relative;
   overflow: hidden;
-  touch-action: none;
+  /* `none` left no legal tap target anywhere on screen during the animation */
+  touch-action: manipulation;
+  cursor: pointer;
 }
 .stage.shake { animation: shake calc(var(--motion) * .26s) ease-in-out; }
 @keyframes shake {
@@ -404,7 +409,7 @@ body::before {
   pointer-events: none;
   --tx: 210%; --ty: -60px; --px: 120%; --py: -80px;
 }
-.ball.shoot { animation: shoot calc(var(--motion) * .7s) cubic-bezier(.25,.6,.4,1) forwards; }
+.ball.shoot { animation: shoot calc(var(--motion) * .42s) cubic-bezier(.25,.6,.4,1) forwards; }
 
 @keyframes shoot {
   0%   { transform: translate(0,0) scale(1) rotate(0); opacity: 1; }
@@ -419,7 +424,7 @@ body::before {
 /* A timeout must not read as being beaten — the ball never reaches the line,
    it just rolls to a stop on the grass. */
 .traj-scuffed      { --tx: 70%;  --ty: 0;     --px: 45%;  --py: -10px; }
-.ball.traj-scuffed { animation-duration: calc(var(--motion) * .6s); animation-timing-function: ease-out; }
+.ball.traj-scuffed { animation-duration: calc(var(--motion) * .36s); animation-timing-function: ease-out; }
 
 /* ── SHOT CLOCK ─────────────────────────────
    A bar, not numerals: counting-down digits compete with the question's own
@@ -450,7 +455,9 @@ body::before {
 
 .shot-clock[data-urgency="1"] .shot-clock-fill { background: var(--gold); }
 .shot-clock[data-urgency="2"] .shot-clock-fill { background: var(--gold-deep); }
-.shot-clock[data-urgency="2"] { animation: urge .5s ease-in-out infinite; }
+/* Four pulses, not forever: the information lands in ~2s and the rest is
+   involuntary attention capture at the worst possible frequency. */
+.shot-clock[data-urgency="2"] { animation: urge .5s ease-in-out 4; }
 @keyframes urge { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.35); } }
 
 /* ── QUESTION ────────────────────────────── */
@@ -888,3 +895,15 @@ body::before {
 .tie-pip.on { background: var(--gold-deep); }
 .season-strip .tie-pip { background: rgba(255,255,255,.22); }
 .season-strip .tie-pip.on { background: var(--gold); }
+
+/* Without an affordance almost no child discovers tap-to-skip */
+.skip-hint {
+  position: absolute;
+  right: 8px; bottom: 22px;
+  font-size: .72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.62);
+  pointer-events: none;
+}
+/* Now that the n/total counter is gone, the dots must say which one is now */
+.dot.current { box-shadow: 0 0 0 3px var(--gold); }
