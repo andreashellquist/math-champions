@@ -8,6 +8,7 @@ import ResultScreen from './components/ResultScreen'
 import TrophyScreen from './components/TrophyScreen'
 import RosterScreen from './components/RosterScreen'
 import MasteryMap from './components/MasteryMap'
+import SeasonScreen from './components/SeasonScreen'
 import UnlockToast from './components/UnlockToast'
 
 const SCREENS = {
@@ -18,6 +19,7 @@ const SCREENS = {
   trophy: TrophyScreen,
   roster: RosterScreen,
   map:    MasteryMap,
+  season: SeasonScreen,
 }
 
 function Shell() {

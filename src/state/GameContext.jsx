@@ -61,6 +61,7 @@ export function GameProvider({ children }) {
       type: 'ADVANCE',
       fact,
       question: fact ? questionFor(state.mastery, fact) : null,
+      rivalId: rival.id,
       at: Date.now(),
     })
   }, [state.round, state.mastery])

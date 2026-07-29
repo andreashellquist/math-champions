@@ -164,6 +164,24 @@ export default {
     menuSummary: '{n} av {total} tal sitter säkert',
   },
 
+  season: {
+    title: '🏆 Säsong {n}',
+    subtitle: 'Fyra turneringar. En motståndare i varje.',
+    allClear: 'Alla fyra klara! Nästa säsong väntar.',
+    cups: '{n} vunna säsonger',
+    tieProgress: '{n} av {total} vinster i mötet',
+    playTie: 'Spela',
+    strip: 'Säsong {n} · {comp}',
+    comp: {
+      cup:    'Cupen',
+      league: 'Ligan',
+      europe: 'Europacupen',
+      final:  'Finalen',
+    },
+    tieWon: '🏆 Du tog mötet mot {rival}!',
+    seasonWon: '🏆🏆 Säsong {n} avklarad! Alla fyra turneringar vunna.',
+  },
+
   unlock: '🔓 {icon} {name} upplåst!',
 
   /* ── KNEP ───────────────────────────────────────────────── */

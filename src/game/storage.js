@@ -12,7 +12,10 @@
  * Cookies", some home-screen webviews. That must degrade to an in-memory
  * session, never a white screen.
  */
-import { emptyState, STATE_VERSION, OP_KEYS } from './mastery'
+import {
+  emptyState, emptyRivalry, STATE_VERSION, OP_KEYS, COMPETITIONS, TIE_TARGET,
+} from './mastery'
+import { RIVAL_IDS } from './rivals'
 
 const KEY = 'mc_state'
 const LEGACY_CORRECT = 'mc_correct'
@@ -108,6 +111,39 @@ export function sanitize(raw) {
       rounds:     int(raw.agg?.rounds, 0, 1e9),
       bestStreak: int(raw.agg?.bestStreak, 0, 9999),
     },
+    rivalry: cleanRivalry(raw.rivalry),
+  }
+}
+
+/** Season state. Bounded by the rival roster, so it can't grow with play time. */
+function cleanRivalry(raw) {
+  const base = emptyRivalry()
+  if (!raw || typeof raw !== 'object') return base
+
+  const wins = {}, h2h = {}
+  for (const id of RIVAL_IDS) {
+    const w = int(raw.wins?.[id], 0, TIE_TARGET)
+    if (w) wins[id] = w
+    const pair = Array.isArray(raw.h2h?.[id]) ? raw.h2h[id] : null
+    if (pair) {
+      const won = int(pair[0], 0, 1e6)
+      // `played` can never be less than `won` — a corrupt pair must not
+      // produce a negative loss count anywhere downstream
+      h2h[id] = [won, Math.max(won, int(pair[1], 0, 1e6))]
+    }
+  }
+
+  return {
+    season: int(raw.season, 1, 9999, 1),
+    stage: int(raw.stage, 0, COMPETITIONS.length),
+    wins,
+    h2h,
+    cups: Array.isArray(raw.cups)
+      ? raw.cups
+          .filter(c => c && typeof c === 'object')
+          .slice(0, 200)
+          .map(c => ({ season: int(c.season, 1, 9999, 1), at: int(c.at, 0, Number.MAX_SAFE_INTEGER) }))
+      : [],
   }
 }
 
@@ -125,6 +161,9 @@ function migrateFromLegacy() {
 
 const MIGRATIONS = {
   1: prev => ({ ...emptyState(), ...prev, v: 2 }),
+  // v3 adds the season. Mastery is untouched — a child mid-ladder keeps every
+  // fact and simply starts the first competition.
+  2: prev => ({ ...prev, v: 3, rivalry: emptyRivalry() }),
 }
 
 /* ── PUBLIC API ────────────────────────────────────────────── */

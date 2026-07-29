@@ -18,7 +18,7 @@ import {
 } from './facts'
 import { rng as defaultRng } from './rng'
 
-export const STATE_VERSION = 2
+export const STATE_VERSION = 3
 
 /** Items (not seconds) before a fact is due again, per box */
 const BOX_GAP = [0, 3, 8, 20, 45, 100]
@@ -47,8 +47,89 @@ export function emptyState() {
     e: [],                                                  // recent error families
     r: Object.fromEntries(OP_KEYS.map(o => [o, []])),       // recent outcomes per op
     agg: { correct: 0, goals: 0, seen: 0, rounds: 0, bestStreak: 0 },
+    rivalry: emptyRivalry(),
   }
 }
+
+/* ── SEASON ────────────────────────────────────────────────────
+   The rivalry is the progression frame, not a parallel system. A tie is
+   first-to-three round-wins; clearing a rival clears a competition; clearing
+   all four completes the season, and season N+1 recomputes its difficulty from
+   current mastery — so it never ends and never gets easier.
+
+   A lost round never removes progress. Ties have a not-yet state, never a lost
+   state: no relegation, no decrementing counters, no expiry.
+   ─────────────────────────────────────────────────────────── */
+
+/** Round-wins needed to take a tie */
+export const TIE_TARGET = 3
+/** A round-win reuses the existing three-star band */
+export const ROUND_WIN_GOALS = 4
+
+/** The four competitions, in order. Visible from session one so the arc is legible. */
+export const COMPETITIONS = [
+  { id: 'cup',    op: 'addition',       rival: 'red_devil' },
+  { id: 'league', op: 'subtraction',    rival: 'white_wall' },
+  { id: 'europe', op: 'multiplication', rival: 'blaugrana' },
+  { id: 'final',  op: 'division',       rival: 'gunner' },
+]
+
+export function emptyRivalry() {
+  return {
+    season: 1,
+    stage: 0,             // index into COMPETITIONS; === length ⇒ season complete
+    wins: {},             // rivalId → round-wins in the active tie (0..TIE_TARGET)
+    h2h: {},              // rivalId → [won, played] lifetime
+    cups: [],             // [{ season, at }]
+  }
+}
+
+/** The competition currently in play, or null once the season is complete */
+export function currentCompetition(state) {
+  return COMPETITIONS[state.rivalry?.stage ?? 0] ?? null
+}
+
+export const seasonComplete = state => (state.rivalry?.stage ?? 0) >= COMPETITIONS.length
+
+/**
+ * Record a completed fixture.
+ *
+ * Only wins advance anything. A round that fell short increments `played` and
+ * nothing else — there is no path here that reduces a number the child has
+ * already earned.
+ */
+export function applyFixtureResult(state, { rivalId, goals, at = Date.now() }) {
+  const riv = state.rivalry ?? emptyRivalry()
+  const won = goals >= ROUND_WIN_GOALS
+  const [w, p] = riv.h2h[rivalId] ?? [0, 0]
+
+  const wins = { ...riv.wins, [rivalId]: Math.min(TIE_TARGET, (riv.wins[rivalId] ?? 0) + (won ? 1 : 0)) }
+  const h2h = { ...riv.h2h, [rivalId]: [w + (won ? 1 : 0), p + 1] }
+
+  const tieTaken = wins[rivalId] >= TIE_TARGET
+  const isActive = COMPETITIONS[riv.stage]?.rival === rivalId
+  const stage = tieTaken && isActive ? riv.stage + 1 : riv.stage
+  const finishedSeason = stage >= COMPETITIONS.length && riv.stage < COMPETITIONS.length
+
+  return {
+    ...state,
+    rivalry: {
+      ...riv,
+      wins,
+      h2h,
+      // Starting a new season clears the tie counters but never the ledger
+      stage: finishedSeason ? 0 : stage,
+      season: finishedSeason ? riv.season + 1 : riv.season,
+      cups: finishedSeason ? [...riv.cups, { season: riv.season, at }] : riv.cups,
+      ...(finishedSeason ? { wins: {} } : {}),
+    },
+    justWonTie: tieTaken && isActive ? rivalId : null,
+    justWonSeason: finishedSeason ? riv.season : null,
+  }
+}
+
+export const tieWins = (state, rivalId) => state.rivalry?.wins?.[rivalId] ?? 0
+export const headToHead = (state, rivalId) => state.rivalry?.h2h?.[rivalId] ?? [0, 0]
 
 const EMPTY_REC = [0, 0, 0, 0]
 

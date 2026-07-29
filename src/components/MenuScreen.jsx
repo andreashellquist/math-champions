@@ -3,6 +3,8 @@ import { useTranslation } from '../i18n/useTranslation'
 import { getCharacter } from '../game/characters'
 import { masteredCount, MASTERED_BOX } from '../game/mastery'
 import { STRANDS_BY_OP } from '../game/facts'
+import { currentCompetition, tieWins, TIE_TARGET } from '../game/mastery'
+import { getRival } from '../game/rivals'
 import { OP_ORDER } from '../game/config'
 import Player from './Player'
 
@@ -20,6 +22,8 @@ export default function MenuScreen() {
   const them = getCharacter(keeperId)
 
   const total = TOTAL_FACTS
+  const comp = currentCompetition(state.mastery)
+  const wins = comp ? tieWins(state.mastery, comp.rival) : 0
   const bands = BAND_COLORS.map((color, box) => ({
     box, color,
     pct: (Object.values(state.mastery.f).filter(r => r[0] === box).length / total) * 100,
@@ -48,6 +52,25 @@ export default function MenuScreen() {
         <span>{t('menu.goals')} <b>{agg.goals}</b></span>
         <span>{t('menu.factsKnown')} <b>{masteredCount(state.mastery)}</b></span>
       </div>
+
+      {/* The season, as a strip rather than a fifth button */}
+      {comp && (
+        <button
+          className="season-strip"
+          onClick={() => dispatch({ type: 'NAVIGATE', screen: 'season' })}
+        >
+          <Player id={comp.rival} role="keeper" pose="ready" size={38} animate={false} />
+          <span className="season-strip-text">
+            <b>{t('season.strip', { n: state.mastery.rivalry?.season ?? 1, comp: t(`season.comp.${comp.id}`) })}</b>
+            <span>{t(getRival(comp.rival).nameKey)}</span>
+          </span>
+          <span className="tie-pips" aria-hidden="true">
+            {Array.from({ length: TIE_TARGET }, (_, k) => (
+              <span key={k} className={`tie-pip${k < wins ? ' on' : ''}`} />
+            ))}
+          </span>
+        </button>
+      )}
 
       {/* One glance at the whole fact space: a bar that visibly moves every
           session. It is the tap target itself rather than a fifth button. */}

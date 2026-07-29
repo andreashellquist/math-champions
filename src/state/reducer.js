@@ -15,7 +15,7 @@ import { OPS, OP_ORDER, opName } from '../game/config'
 import { t } from '../i18n'
 import { getHint } from '../game/hints'
 import { classifyChoice } from '../game/distractors'
-import { applyAnswer, emptyState, MIN_REQUEUE_GAP } from '../game/mastery'
+import { applyAnswer, emptyState, MIN_REQUEUE_GAP, applyFixtureResult } from '../game/mastery'
 
 export const TOTAL_KICKS = 5
 
@@ -279,11 +279,25 @@ export function reducer(state, action) {
       const done = nextIdx >= (r.totalKicks ?? TOTAL_KICKS) && !r.suddenDeath
 
       if (done || !action.question) {
+        let mastery = { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } }
+        let tieWon = null, seasonWon = null
+
+        // Only a derby counts toward a tie. Falling short increments `played`
+        // and nothing else — nothing here can reduce what the child has earned.
+        if (r.mode === 'fixture' && action.rivalId) {
+          const next = applyFixtureResult(mastery, {
+            rivalId: action.rivalId, goals: r.goals, at: action.at ?? Date.now(),
+          })
+          tieWon = next.justWonTie
+          seasonWon = next.justWonSeason
+          mastery = { ...next, justWonTie: undefined, justWonSeason: undefined }
+        }
+
         return {
           ...state,
           screen: 'result',
-          mastery: { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } },
-          round: { ...r, phase: 'done' },
+          mastery,
+          round: { ...r, phase: 'done', tieWon, seasonWon },
         }
       }
 

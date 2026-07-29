@@ -156,6 +156,24 @@ export default {
     menuSummary: '{n} of {total} facts are solid',
   },
 
+  season: {
+    title: '🏆 Season {n}',
+    subtitle: 'Four competitions. One opponent in each.',
+    allClear: 'All four cleared! Next season awaits.',
+    cups: '{n} seasons won',
+    tieProgress: '{n} of {total} wins in the tie',
+    playTie: 'Play',
+    strip: 'Season {n} · {comp}',
+    comp: {
+      cup:    'The Cup',
+      league: 'The League',
+      europe: 'Europe',
+      final:  'The Final',
+    },
+    tieWon: '🏆 You took the tie against {rival}!',
+    seasonWon: '🏆🏆 Season {n} complete! All four competitions won.',
+  },
+
   unlock: '🔓 {icon} {name} unlocked!',
 
   /* ── HINTS ──────────────────────────────────────────────── */
