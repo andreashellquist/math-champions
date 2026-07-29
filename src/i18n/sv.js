@@ -22,7 +22,7 @@ export default {
 
   menu: {
     title: '⚽ Mattemästarna',
-    subtitle: 'Träna som proffsen — gör mål på planen och i matten',
+    subtitle: 'Träna som proffsen — gör mål på planen och i matten ⚽',
     play: 'Spela',
     changePlayer: '👕 Byt spelare',
     stats: '🏆 Min statistik',
@@ -34,7 +34,7 @@ export default {
 
   mode: {
     title: 'Välj träning',
-    subtitle: 'Välj vad du vill träna på ⚽',
+    subtitle: 'Vad ska vi köra på idag?',
     progress: '{pct}% av vägen',
     opensAt: 'Öppnas vid {n} rätt',
     tryAnyway: 'Testa ändå →',
@@ -44,23 +44,23 @@ export default {
 
   roster: {
     title: 'Välj din spelare',
-    subtitle: 'Alla går att välja. Byt när du vill.',
+    subtitle: 'Alla är med i truppen. Byt hur ofta du vill!',
   },
 
   game: {
     kickOf: '{n}/{total}',
-    showTrick: '🧠 Visa ett knep',
+    showTrick: '🧠 Tipsa mig!',
     clockOff: '🏳️ Ta bort klockan',
     paused: 'Pausad',
     ready: 'Klar',
-    goal: '⚽ MÅL!',
-    goalScreamer: '⚽ OSTOPPBAR!',
-    goalGlove: '⚽ MÅL — på målvaktens handske!',
-    goalRebound: '⚽ RETURMÅL! Du använde knepet och kom fram.',
+    goal: '⚽ MÅÅÅL!',
+    goalScreamer: '⚽ OSTOPPBART! Rakt i krysset!',
+    goalGlove: '⚽ MÅL! Han nuddade den — men in gick den!',
+    goalRebound: '⚽ RETURMÅL! Du snappade knepet och satte den.',
     goalRetake: '⚽ Mål på omtagningen. Matten var rätt — klockan var bara snabb.',
-    parried: '🧤 Retur! Bollen är kvar i spel — ta returen.',
-    reveal: 'Svaret är {ans}. Tryck på det en gång så hjärnan minns.',
-    revealDone: 'Så där. {ans} kommer tillbaka senare i omgången.',
+    parried: '🧤 Retur! Bollen lever — kör igen!',
+    reveal: 'Svaret är {ans}. Tryck på det — då kommer hjärnan ihåg det.',
+    revealDone: 'Bra. Vi tar {ans} en gång till lite senare.',
     timeout: '⏱️ Pip! Ta straffen ändå — utan klocka den här gången.',
     streak: '🔥 {n} i rad!',
     dotsLabel: 'Straff {n} av {total}. {results}',
@@ -74,7 +74,7 @@ export default {
     nextRound: '▶ Nästa omgång',
     changeTraining: 'Byt träning',
     brainPoints: '🧠 Hjärnpoäng',
-    brainPointsNote: 'Hjärnpoäng kommer från de svåra.',
+    brainPointsNote: 'Hjärnpoäng får man bara av de svåra. Snyggt jobbat.',
     fromRebound: '{n} på returen. ',
     retakes: '{n} omtagning(ar).',
     clockWon: '⏱️ Klockan vann den där — inte matten.',
@@ -235,7 +235,7 @@ export default {
     MUL_ADJACENT_MULTIPLE:   'En grupp för mycket eller för lite — räkna grupperna igen.',
     MUL_NINE_SHORTCUT:       'Gånger tio var rätt början — ta nu bort en grupp.',
     MUL_HALF_TABLE:          'Det är hälften. En dubbling kvar.',
-    MUL_DIGIT_REVERSAL:      'Rätt siffror, fel ordning.',
+    MUL_DIGIT_REVERSAL:      'Rätt siffror — bara omvänd ordning.',
     MUL_OP_CONFUSION:        'Det är summan. Här handlar det om grupper av.',
     MUL_IDENTITY_BUG:        'Se upp med noll och ett — de har egna regler.',
     DIV_SWAP_OPERANDS:       'Det är hur många som är i varje grupp, inte hur många grupper.',

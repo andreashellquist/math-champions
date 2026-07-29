@@ -100,3 +100,56 @@ describe('banter', () => {
     expect(banter('greet', null, r)).toBeNull()
   })
 })
+
+describe('app-wide tone', () => {
+  /** Every user-facing string in a locale, flattened */
+  function allStrings(obj, path = '') {
+    return Object.entries(obj).flatMap(([k, v]) => {
+      const at = path ? `${path}.${k}` : k
+      if (typeof v === 'string') return [[at, v]]
+      if (Array.isArray(v)) return v.map((s, i) => [`${at}[${i}]`, s])
+      return allStrings(v, at)
+    })
+  }
+
+  const strings = LOCALE_CODES.flatMap(code =>
+    allStrings(LOCALES[code]).map(([k, v]) => [`${code}:${k}`, v]))
+
+  it('has plenty of copy to check', () => {
+    expect(strings.length).toBeGreaterThan(200)
+  })
+
+  it('contains no violent or aggressive language anywhere', () => {
+    const violent = /\b(kill|död[a]?|smash|krossa|destroy|förstör|attack|anfall|war|krig|fight|slåss|weapon|vapen|shoot(?!ing)|blood|blod|hate|hatar|revenge|hämnd|enemy|fiende)\b/i
+    for (const [key, value] of strings) {
+      expect(value, `${key}: "${value}"`).not.toMatch(violent)
+    }
+  })
+
+  it('never puts the child down', () => {
+    const putdown = /\b(dum|dålig|värdelös|misslyckad|fel på dig|stupid|dumb|bad at|useless|failure|loser|pathetic|weak)\b/i
+    for (const [key, value] of strings) {
+      expect(value, `${key}: "${value}"`).not.toMatch(putdown)
+    }
+  })
+
+  it('avoids the banned failure vocabulary', () => {
+    // "Saved!" and "Wrong" were the original copy. A miss is a parry with the
+    // ball still live; nothing in the app calls the child wrong.
+    const banned = /\b(wrong|incorrect|failed|räddad!|fel svar)\b/i
+    for (const [key, value] of strings) {
+      // The aria-only word "räddad" describes the ball for a screen reader
+      if (key.endsWith('game.resultMiss')) continue
+      expect(value, `${key}: "${value}"`).not.toMatch(banned)
+    }
+  })
+
+  it('never shames a gap in knowledge', () => {
+    // Deliberately narrow: "the ten got left behind" is about the digit, not
+    // the child. Only phrasings that locate a deficit *in the child* count.
+    const shaming = /\b(struggling|falling behind|you'?re behind|du är efter|poor at|svag på|weakness|svaghet|problemområde)\b/i
+    for (const [key, value] of strings) {
+      expect(value, `${key}: "${value}"`).not.toMatch(shaming)
+    }
+  })
+})

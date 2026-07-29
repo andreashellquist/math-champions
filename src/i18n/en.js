@@ -14,7 +14,7 @@ export default {
 
   menu: {
     title: '⚽ Math Champions',
-    subtitle: 'Train like the pros — score big on and off the pitch',
+    subtitle: 'Train like the pros — score big on and off the pitch ⚽',
     play: 'Play',
     changePlayer: '👕 Change player',
     stats: '🏆 My stats',
@@ -26,7 +26,7 @@ export default {
 
   mode: {
     title: 'Choose training',
-    subtitle: 'Pick what you want to practise ⚽',
+    subtitle: 'What are we working on today?',
     progress: '{pct}% of the way through',
     opensAt: 'Opens at {n} correct',
     tryAnyway: 'Try it anyway →',
@@ -36,23 +36,23 @@ export default {
 
   roster: {
     title: 'Pick your player',
-    subtitle: "Everyone's available. Change whenever you like.",
+    subtitle: 'Everyone\'s in the squad. Swap as often as you like!',
   },
 
   game: {
     kickOf: '{n}/{total}',
-    showTrick: '🧠 Show me a trick',
+    showTrick: '🧠 Give me a tip!',
     clockOff: '🏳️ Take it off the clock',
     paused: 'Paused',
     ready: 'Ready',
-    goal: '⚽ GOAL!',
-    goalScreamer: '⚽ UNSTOPPABLE!',
-    goalGlove: "⚽ GOAL — off the keeper's glove!",
-    goalRebound: '⚽ REBOUND GOAL! You used the trick and got there.',
+    goal: '⚽ GOOOAL!',
+    goalScreamer: '⚽ UNSTOPPABLE! Top corner!',
+    goalGlove: '⚽ GOAL! He got a hand to it — still went in!',
+    goalRebound: '⚽ REBOUND GOAL! You grabbed the trick and buried it.',
     goalRetake: '⚽ Retake goal. The maths was right — the clock was just quick.',
-    parried: "🧤 Parried! The ball's still live — take the rebound.",
-    reveal: 'The answer is {ans}. Tap it once so your brain keeps it.',
-    revealDone: 'Got it. {ans} comes back later this round.',
+    parried: '🧤 Parried! Ball\'s still live — go again!',
+    reveal: 'The answer is {ans}. Tap it — that\'s how your brain keeps it.',
+    revealDone: 'Nice. We\'ll see {ans} again a bit later.',
     timeout: '⏱️ Whistle! Take it anyway — no clock this time.',
     streak: '🔥 {n} in a row!',
     dotsLabel: 'Kick {n} of {total}. {results}',
@@ -66,7 +66,7 @@ export default {
     nextRound: '▶ Next round',
     changeTraining: 'Change training',
     brainPoints: '🧠 Brain points',
-    brainPointsNote: 'Brain points come from the hard ones.',
+    brainPointsNote: 'Brain points only come from the hard ones. Well done.',
     fromRebound: '{n} from the rebound. ',
     retakes: '{n} retake(s).',
     clockWon: '⏱️ The clock won that one — not the maths.',
@@ -227,7 +227,7 @@ export default {
     MUL_ADJACENT_MULTIPLE:   'One group too many or too few — count the groups again.',
     MUL_NINE_SHORTCUT:       'Times ten was the right start — now take one group back off.',
     MUL_HALF_TABLE:          'That is half of it. One more double to go.',
-    MUL_DIGIT_REVERSAL:      'Right digits, wrong way round.',
+    MUL_DIGIT_REVERSAL:      'Right digits — just swapped round.',
     MUL_OP_CONFUSION:        'That is the sum. This one is groups of.',
     MUL_IDENTITY_BUG:        'Watch the zero and the one — they have their own rules.',
     DIV_SWAP_OPERANDS:       'That is how many are in each group, not how many groups.',
