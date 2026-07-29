@@ -1,0 +1,263 @@
+export default {
+  common: {
+    back: '← Back',
+    done: '← Done',
+    menu: '🏠 Menu',
+  },
+
+  ops: {
+    addition: 'Addition',
+    subtraction: 'Subtraction',
+    multiplication: 'Multiplication',
+    division: 'Division',
+  },
+
+  menu: {
+    title: '⚽ Math Champions',
+    subtitle: 'Train like the pros — score big on and off the pitch',
+    play: 'Play',
+    changePlayer: '👕 Change player',
+    stats: '🏆 My stats',
+    goals: '⚽ Goals',
+    factsKnown: '🧠 Facts known',
+    soundOn: '🔊 Sound on',
+    soundOff: '🔇 Sound off',
+  },
+
+  mode: {
+    title: 'Choose training',
+    subtitle: 'Pick what you want to practise ⚽',
+    progress: '{pct}% of the way through',
+    opensAt: 'Opens at {n} correct',
+    tryAnyway: 'Try it anyway →',
+    shootout: '⏱️ Shootout',
+    shootoutNote: '⏱️ Shootout: the ref is timing you. Same maths, more drama. Get it right and you score — every single time.',
+  },
+
+  roster: {
+    title: 'Pick your player',
+    subtitle: "Everyone's available. Change whenever you like.",
+  },
+
+  game: {
+    kickOf: '{n}/{total}',
+    showTrick: '🧠 Show me a trick',
+    clockOff: '🏳️ Take it off the clock',
+    paused: 'Paused',
+    ready: 'Ready',
+    goal: '⚽ GOAL!',
+    goalScreamer: '⚽ UNSTOPPABLE!',
+    goalGlove: "⚽ GOAL — off the keeper's glove!",
+    goalRebound: '⚽ REBOUND GOAL! You used the trick and got there.',
+    goalRetake: '⚽ Retake goal. The maths was right — the clock was just quick.',
+    parried: "🧤 Parried! The ball's still live — take the rebound.",
+    reveal: 'The answer is {ans}. Tap it once so your brain keeps it.',
+    revealDone: 'Got it. {ans} comes back later this round.',
+    timeout: '⏱️ Whistle! Take it anyway — no clock this time.',
+    streak: '🔥 {n} in a row!',
+    dotsLabel: 'Kick {n} of {total}. {results}',
+    noKicks: 'No kicks taken yet.',
+    resultGoal: 'goal',
+    resultRebound: 'rebound goal',
+    resultMiss: 'saved',
+  },
+
+  result: {
+    nextRound: '▶ Next round',
+    changeTraining: 'Change training',
+    brainPoints: '🧠 Brain points',
+    brainPointsNote: 'Brain points come from the hard ones.',
+    fromRebound: '{n} from the rebound. ',
+    retakes: '{n} retake(s).',
+    clockWon: '⏱️ The clock won that one — not the maths.',
+    clockWonMsg: 'You got {n} of them right the moment the whistle stopped. That\'s knowing it. The clock was just set too quick.',
+    moreTime: 'Yes, give me more time',
+    starsLabel: '{n} out of 3 stars',
+  },
+
+  stars: {
+    s5: { title: '🏆 Five from five', msg: 'You stayed focused for every kick. That takes real concentration.' },
+    s4: { title: '🎯 Four goals', msg: 'Your tricks are working. The one that got away is worth another look.' },
+    s3: { title: '⚽ Three goals', msg: 'More in than out. Which kick felt trickiest?' },
+    s2: { title: '💪 Two goals, three facts practised', msg: 'The ones you missed are the ones your brain is building right now.' },
+    s1: { title: '🧠 You got one and kept going', msg: 'Sticking with a hard round is the part that makes you better.' },
+    s0: { title: '🧠 Tough round — you finished it', msg: 'These numbers are still new. Run the same five again and watch what changes.' },
+  },
+
+  trophy: {
+    title: '🏆 Your stats',
+    goalsScored: 'Goals scored',
+    factsKnown: 'Facts you know straight away',
+    bestRun: '🔥 Best run',
+    inARow: 'in a row',
+    whereUpTo: "Where you're up to",
+    firstTry: '{n} of the last {total} on the first try',
+    workingOn: 'Working on',
+    tryLabel: 'try:',
+    reset: 'Reset progress',
+    resetConfirm: 'Reset all progress? This cannot be undone.',
+    language: 'Language',
+  },
+
+  rivals: {
+    red_devil:  'The Red Devil',
+    white_wall: 'The White Wall',
+    blaugrana:  'The Catalan Wall',
+    gunner:     'The Gunner',
+    dynamite:   'The Dynamite',
+  },
+
+  fixture: {
+    label: '🧤 The Derby',
+    note: 'In the derby {rival} picks the questions — he takes your trickiest ones. He never picks the outcome. Get it right and you score.',
+    intro: '{rival} picked five tricky ones. Ready?',
+    picked: '{rival} chose these.',
+    goalNod: '{rival} nods. Nothing he could do.',
+    won: 'You won the tie. {n} of {total} past {rival}.',
+    low: 'Five shots, five tries. The ones that got away will come back.',
+    ledger: "You've won {n} ties against {rival}.",
+    next: 'Next up: {rival}.',
+    off: 'Practice, no opponent',
+  },
+
+  banter: {
+    greet: [
+      '{rival}: "Gloves are warm. Bring it on!"',
+      '{rival}: "Five shots. Ready when you are."',
+      '{rival}: "Good to see you again. Show me what you\'ve got!"',
+    ],
+    beaten: [
+      '{rival}: "That one was too good for me."',
+      '{rival}: "Lovely! Never got near it."',
+      '{rival}: "Ooh. Right in the corner."',
+    ],
+    wonTie: [
+      '{rival} gives you a high five. "Well played. See you in the return match!"',
+      '{rival}: "You were sharp today. Congratulations!"',
+    ],
+    closeTie: [
+      '{rival}: "Thanks for the game. I\'ll be here whenever you want another."',
+      '{rival}: "Good effort. Same time next time?"',
+    ],
+  },
+
+  map: {
+    title: '🌱 Your pitch',
+    grown: '{n} of {total} squares grown',
+    gridLabel: 'Map of {op}',
+    cellLabel: '{fact}, box {box} of 5',
+    unplanted: 'Unplanted',
+    growing: 'Growing',
+    solid: 'Solid',
+    bigNumbers: 'Bigger numbers',
+    practise: 'Practise this one',
+    close: 'Close',
+    open: '🌱 See your pitch',
+    menuSummary: '{n} of {total} facts are solid',
+  },
+
+  unlock: '🔓 {icon} {name} unlocked!',
+
+  /* ── HINTS ──────────────────────────────────────────────── */
+  hint: {
+    add: {
+      bondToTen:   { label: 'A bond to ten', steps: '{a} and {b} make ten — worth knowing by heart' },
+      justOneMore: { label: 'Just one more', steps: '{max}, then count on {min}' },
+      double:      { label: "It's a double", steps: '{a} and {a} — doubles come fast' },
+      nearDouble:  { label: 'Near double', steps: '{min}+{min}={dbl}, then one more' },
+      nineTrick:   { label: 'Nine trick', steps: '{other}+10={plusTen}, then take 1 off' },
+      addTen:      { label: 'Add ten', steps: 'Only the tens digit changes' },
+      makeTen:     { label: 'Make ten', steps: '{a}+{toTen}=10, then +{rest}={ans}' },
+      splitUp:     { label: 'Split it up', steps: '{aT}+{bT}={tens}, {aO}+{bO}={onesSum}, add them' },
+      countOn:     { label: 'Count on', steps: 'Start at {max}, count up {min}' },
+    },
+    sub: {
+      takeNothing: { label: 'Take nothing', steps: 'Nothing left, nothing changes' },
+      allOfIt:     { label: 'All of it', steps: 'Take it all away — zero left' },
+      countUp:     { label: 'Count up', steps: 'From {b} up to {a} is {ans} steps' },
+      nineTrick:   { label: 'Nine trick', steps: 'Take 10 → {minusTen}, then put 1 back' },
+      takeTens:    { label: 'Take tens', steps: 'Only the tens digit changes' },
+      downToTen:   { label: 'Down to ten', steps: '{a}−{aO}=10, then −{rest}={ans}' },
+      splitUp:     { label: 'Split it up', steps: '{aT}−{bT}={tens}, {aO}−{bO}={onesDiff}' },
+      countUpEnd:  { label: 'Count up', steps: 'Start at {b}, jump up to {a}' },
+    },
+    mul: {
+      flip:            'Turn it around: {hi}×{lo}. ',
+      zeroGroups:      { label: 'Zero groups', steps: "No groups at all — that's 0" },
+      oneGroup:        { label: 'One group', steps: 'One group of {hi} is {hi}' },
+      doubleIt:        { label: 'Double it', steps: '{hi}+{hi}={ans}' },
+      timesTen:        { label: 'Times ten', steps: '{hi} with a 0 after it' },
+      halfOfTen:       { label: 'Half of ten', steps: '{hi}×10={x10}, half is {ans}' },
+      oneGroupLess:    { label: 'One group less', steps: '{hi}×10={x10}, take away {hi}' },
+      doubleDouble:    { label: 'Double, double', steps: '{hi}+{hi}={x2}, {x2}+{x2}={ans}' },
+      doubleThrice:    { label: 'Double three times', steps: '{hi}→{x2}→{x4}→{ans}' },
+      doublePlusOne:   { label: 'Double plus one', steps: '{hi}×2={x2}, plus {hi} is {ans}' },
+      fivePlusOne:     { label: 'Five plus one', steps: '{hi}×5={x5}, plus {hi} is {ans}' },
+      fivePlusTwo:     { label: 'Five plus two', steps: '{hi}×5={x5}, {hi}×2={x2}, add them' },
+      skipCount:       { label: 'Skip count', steps: 'Count by {lo}: {lo}, {s2}, {s3}…' },
+    },
+    div: {
+      splitByOne:  { label: 'Split by one', steps: 'One group — it stays {a}' },
+      oneEach:     { label: 'One each', steps: '{a} into groups of {a} is 1' },
+      halveIt:     { label: 'Halve it', steps: 'Half of {a} is {ans}' },
+      divideByTen: { label: 'Divide by ten', steps: 'Drop the 0: {a} → {ans}' },
+      skipCount:   { label: 'Skip count', steps: '{b}, {s2}, {s3}… how many to reach {a}?' },
+      flipIt:      { label: 'Flip it round', steps: '{b} × ? = {a}. Same fact, backwards.' },
+    },
+    generic: { label: 'Think it through', steps: 'Take it one step at a time' },
+  },
+
+  /* ── DIAGNOSES ──────────────────────────────────────────
+     Describe where the number went, never the child. */
+  diag: {
+    ADD_CARRY_DROP:          'So close — the ten you carried got left behind.',
+    ADD_CONCAT:              'The tens and the ones got written side by side instead of added.',
+    ADD_DOUBLE_PULL:         'That is the double. These two are one apart, so it is one more.',
+    ADD_ROUND_NO_ADJUST:     'Rounding up was smart — now take the extra back off.',
+    ADD_OP_CONFUSION:        'That is the difference. This one is a plus.',
+    ADD_BRIDGE_SLIP:         'Right idea crossing ten — just landed a step out.',
+    ADD_COUNT_ON:            'One step out. Count it once more.',
+    SUB_SMALLER_FROM_LARGER: 'The ones column got flipped round. You can take the bigger from the smaller — borrow a ten.',
+    SUB_BORROW_NO_DECREMENT: 'You borrowed a ten but the tens column kept it too.',
+    SUB_ZERO_BUG:            'Nothing to take from in the ones — borrow a ten first.',
+    SUB_OP_CONFUSION:        'That is the total. This one is a take-away.',
+    SUB_DECREMENT_ONLY:      'A whole ten went missing from that one.',
+    SUB_COUNT_BACK:          'One step out. Count back once more.',
+    MUL_SQUARE_PULL:         'That is the square next door. These two are one apart.',
+    MUL_ADJACENT_MULTIPLE:   'One group too many or too few — count the groups again.',
+    MUL_NINE_SHORTCUT:       'Times ten was the right start — now take one group back off.',
+    MUL_HALF_TABLE:          'That is half of it. One more double to go.',
+    MUL_DIGIT_REVERSAL:      'Right digits, wrong way round.',
+    MUL_OP_CONFUSION:        'That is the sum. This one is groups of.',
+    MUL_IDENTITY_BUG:        'Watch the zero and the one — they have their own rules.',
+    DIV_SWAP_OPERANDS:       'That is how many are in each group, not how many groups.',
+    DIV_SKIP_MISCOUNT:       'One group out — skip count it once more.',
+    DIV_HALF_ERROR:          'That is double the answer — it got halved one time too few.',
+    DIV_OP_CONFUSION:        'That is the difference. This one is sharing out.',
+    DIV_ECHO_DIVIDEND:       'That is the number you started with, before sharing.',
+  },
+
+  /* ── WORD PROBLEMS ─────────────────────────────────────── */
+  word: {
+    addition: [
+      '{p1} scored {a} goals. {p2} scored {b}. How many goals together?',
+      '{team} had {a} fans. Then {b} more arrived. How many now?',
+    ],
+    subtraction: [
+      '{team} sold {a} tickets. {b} came back. How many are left?',
+      '{p1} took {a} shots and missed {b}. How many went in?',
+    ],
+    subtractionCompare: [
+      '{p1} has {a} cards, {p2} has {b}. How many more does {p1} have?',
+    ],
+    multiplication: [
+      '{a} teams with {b} players each. How many players?',
+      '{p1} scores {b} goals every match. How many after {a} matches?',
+      'The stand has {a} rows of {b} seats. How many seats?',
+    ],
+    division: [
+      '{a} balls shared equally into {b} bags. How many in each bag?',
+      '{a} players make teams of {b}. How many teams?',
+    ],
+  },
+}

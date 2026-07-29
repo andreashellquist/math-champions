@@ -1,0 +1,61 @@
+# ── Dependencies ─────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+
+# ── Build output ─────────────────────────────
+dist/
+dist-ssr/
+build/
+*.local
+
+# ── Vite / tooling caches ────────────────────
+.vite/
+node_modules/.vite/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# ── Logs ─────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Environment ──────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Editors / IDEs ───────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS cruft ─────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Claude Code ──────────────────────────────
+# launch.json is shared (it defines how to run the dev server);
+# local settings and transcripts are not.
+.claude/settings.local.json
+.claude/*.local.json

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="pitch" cx="50%" cy="18%" r="85%">
+      <stop offset="0%" stop-color="#2a8f50"/>
+      <stop offset="100%" stop-color="#0d3f20"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#pitch)"/>
+
+  <!-- Mown stripes -->
+  <g fill="#ffffff" opacity="0.045">
+    <rect x="64"  y="0" width="64" height="512"/>
+    <rect x="192" y="0" width="64" height="512"/>
+    <rect x="320" y="0" width="64" height="512"/>
+    <rect x="448" y="0" width="64" height="512"/>
+  </g>
+
+  <!-- Operators, arranged around the ball -->
+  <g fill="#ffe234" font-family="system-ui, sans-serif" font-weight="900" font-size="86" text-anchor="middle">
+    <text x="112" y="150">+</text>
+    <text x="400" y="150">−</text>
+    <text x="112" y="428">×</text>
+    <text x="400" y="428">÷</text>
+  </g>
+
+  <!-- Ball -->
+  <circle cx="256" cy="262" r="118" fill="#ffffff" stroke="#0d3f20" stroke-width="10"/>
+  <g fill="#1a1a1a">
+    <path d="M256 186 l40 29 -15 47 h-50 l-15 -47 z"/>
+    <path d="M180 246 l14 44 -32 26 -22 -33 z" opacity=".92"/>
+    <path d="M332 246 l-14 44 32 26 22 -33 z" opacity=".92"/>
+    <path d="M226 330 h60 l14 42 -44 26 -44 -26 z" opacity=".92"/>
+  </g>
+</svg>

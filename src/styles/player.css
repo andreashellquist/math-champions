@@ -1,0 +1,138 @@
+/* ═══════════════════════════════════════════
+   Player figures — poses, breathing, outline
+   ═══════════════════════════════════════════ */
+
+.player-fig {
+  overflow: visible;
+  --outline: 1.5px;
+  /* Real club colours mostly fail 3:1 against the pitch green (Man City sky
+     is ~2.2:1, Barça claret ~1.8:1). Rather than compromise five palettes,
+     separation is carried structurally by a light outline on every figure —
+     which also unifies the roster into one visual system. */
+  filter:
+    drop-shadow( var(--outline) 0 0 rgba(255, 255, 255, .92))
+    drop-shadow(calc(var(--outline) * -1) 0 0 rgba(255, 255, 255, .92))
+    drop-shadow(0  var(--outline) 0 rgba(255, 255, 255, .92))
+    drop-shadow(0 calc(var(--outline) * -1) 0 rgba(255, 255, 255, .92))
+    drop-shadow(0 5px 6px rgba(0, 0, 0, .32));
+}
+
+/* Transforms are authored in viewBox units, so the origin must be too */
+.player-fig g { transform-box: view-box; }
+
+.player-fig .g-arm-far  { transform-origin: 47px 66px; }
+.player-fig .g-arm-near { transform-origin: 73px 66px; }
+.player-fig .g-leg-far  { transform-origin: 52px 106px; }
+.player-fig .g-leg-near { transform-origin: 68px 106px; }
+.player-fig .g-torso    { transform-origin: 60px 106px; }
+.player-fig .g-head     { transform-origin: 60px 58px; }
+.player-fig .g-body     { transform-origin: 60px 150px; }
+.player-fig .g-shadow   { transform-origin: 60px 150px; transition: transform .25s, opacity .25s; }
+
+/* Poses interpolate, so idle → windup → kick comes free */
+.player-fig g { transition: transform 180ms cubic-bezier(.34, 1.3, .64, 1); }
+
+/* ── STRIKER POSES ─────────────────────────── */
+
+[data-pose="windup"] .g-leg-near { transform: rotate(30deg); }
+[data-pose="windup"] .g-torso    { transform: rotate(-7deg); }
+[data-pose="windup"] .g-arm-far  { transform: rotate(-34deg); }
+[data-pose="windup"] .g-arm-near { transform: rotate(14deg); }
+
+[data-pose="kick"] .g-leg-near { transform: rotate(-54deg); }
+[data-pose="kick"] .g-leg-far  { transform: rotate(10deg); }
+[data-pose="kick"] .g-torso    { transform: rotate(9deg); }
+[data-pose="kick"] .g-arm-near { transform: rotate(42deg); }
+[data-pose="kick"] .g-arm-far  { transform: rotate(-52deg); }
+
+[data-pose="celebrate"] .g-arm-near { transform: rotate(-128deg); }
+[data-pose="celebrate"] .g-arm-far  { transform: rotate(128deg); }
+[data-pose="celebrate"] .g-leg-near { transform: rotate(-12deg); }
+[data-pose="celebrate"] .g-shadow   { transform: scale(.68); opacity: .5; }
+
+[data-pose="dejected"] .g-head    { transform: rotate(13deg) translateY(3px); }
+[data-pose="dejected"] .g-torso   { transform: rotate(7deg); }
+[data-pose="dejected"] .g-arm-far { transform: rotate(16deg); }
+[data-pose="dejected"] .g-arm-near{ transform: rotate(-10deg); }
+
+/* ── KEEPER POSES ──────────────────────────── */
+
+[data-pose="ready"] .g-arm-near { transform: rotate(-50deg); }
+[data-pose="ready"] .g-arm-far  { transform: rotate(50deg); }
+[data-pose="ready"] .g-leg-near { transform: rotate(-9deg); }
+[data-pose="ready"] .g-leg-far  { transform: rotate(9deg); }
+
+/* A dive pivots about the hips, not the feet. Rotating around the ground
+   point swings the whole figure sideways out of the goal — the keeper has to
+   rotate roughly in place and travel a little, not sweep an arc. */
+[data-pose="dive-left"]  .g-body,
+[data-pose="dive-right"] .g-body,
+[data-pose="beaten"]     .g-body { transform-origin: 60px 108px; }
+
+[data-pose="dive-left"]  .g-body     { transform: rotate(-58deg) translate(-6px, 14px); }
+[data-pose="dive-left"]  .g-arm-far  { transform: rotate(58deg); }
+[data-pose="dive-left"]  .g-arm-near { transform: rotate(-34deg); }
+[data-pose="dive-left"]  .g-leg-near { transform: rotate(-14deg); }
+[data-pose="dive-left"]  .g-shadow   { transform: scale(.6); opacity: .4; }
+
+[data-pose="dive-right"] .g-body     { transform: rotate(58deg) translate(6px, 14px); }
+[data-pose="dive-right"] .g-arm-far  { transform: rotate(34deg); }
+[data-pose="dive-right"] .g-arm-near { transform: rotate(-58deg); }
+[data-pose="dive-right"] .g-leg-near { transform: rotate(14deg); }
+[data-pose="dive-right"] .g-shadow   { transform: scale(.6); opacity: .4; }
+
+[data-pose="beaten"] .g-body   { transform: rotate(-66deg) translate(-4px, 18px); }
+[data-pose="beaten"] .g-head   { transform: rotate(20deg); }
+[data-pose="beaten"] .g-shadow { transform: scale(.7); opacity: .45; }
+
+/* ── IDLE BREATHING ────────────────────────────
+   The 150ms offset between torso and head is what makes it read as a body
+   rather than a scaling rectangle. Rates differ per character — five figures
+   pulsing in lockstep is instantly uncanny. */
+
+@keyframes breathe {
+  0%, 100% { transform: translateY(0)     scaleY(1); }
+  50%      { transform: translateY(-1px)  scaleY(1.014); }
+}
+
+[data-pose="idle"][data-animate="on"] .g-torso,
+[data-pose="ready"][data-animate="on"] .g-torso {
+  animation: breathe var(--breathe, 3.2s) ease-in-out infinite;
+}
+[data-pose="idle"][data-animate="on"] .g-head,
+[data-pose="ready"][data-animate="on"] .g-head {
+  animation: breathe var(--breathe, 3.2s) ease-in-out infinite -.15s;
+}
+
+@keyframes hop {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-16px); }
+}
+[data-pose="celebrate"][data-animate="on"] .g-body {
+  animation: hop 420ms ease-in-out infinite alternate;
+}
+
+/* ── GOAL ──────────────────────────────────── */
+
+.goal {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.goal-frame { position: absolute; inset: 0; }
+.goal-keeper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+
+/* Motion is meaning here — poses still change, they just don't animate */
+@media (prefers-reduced-motion: reduce) {
+  .player-fig g { transition-duration: 0ms; }
+  [data-animate="on"] .g-torso,
+  [data-animate="on"] .g-head,
+  [data-animate="on"] .g-body { animation: none !important; }
+}
