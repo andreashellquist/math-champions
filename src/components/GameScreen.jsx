@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useGame } from '../state/GameContext'
 import { OPS, opName } from '../game/config'
+import { boxName } from '../game/mastery'
 import { t } from '../i18n'
 import { useTranslation } from '../i18n/useTranslation'
 import { useDeadline } from '../hooks/useDeadline'
@@ -423,7 +424,12 @@ function buildFeedback(r) {
   if (r.phase === 'resolving' || r.phase === 'celebrating') {
     if (last === 'timeout-goal') return { type: 'goal',   text: t('game.goalRetake') }
     if (last === 'rebound')      return { type: 'goal',   text: t('game.goalRebound') }
-    if (last === 'miss')         return { type: 'reveal', text: t('game.revealDone', { ans: r.question.ans }) }
+    if (last === 'miss') {
+      // Name the level it drops to. Silent demotion is the thing that reads as
+      // punishment; a squad move is just what happens to real players.
+      const lvl = t(`box.${boxName(r.demotedTo ?? 0)}`)
+      return { type: 'reveal', text: t('box.demoted', { name: lvl }) }
+    }
     if (r.flourish === 'screamer') return { type: 'goal', text: t('game.goalScreamer') }
     if (r.flourish === 'glove')    return { type: 'goal', text: t('game.goalGlove') }
     return { type: 'goal', text: t('game.goal') }

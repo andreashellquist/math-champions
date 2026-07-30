@@ -63,7 +63,11 @@ export function GameProvider({ children }) {
     const r = state.round
     if (!r) return
     const nextIdx = r.kickIdx + 1
+    // Sudden death runs past the end of the composed queue, so top it up
     const fact = r.queue[nextIdx]
+      ?? (r.goals >= (r.totalKicks ?? TOTAL_KICKS)
+        ? buildRoundQueue(state.mastery, r.op, { mode: r.mode, size: 1 })[0]
+        : undefined)
     dispatch({
       type: 'ADVANCE',
       fact,
@@ -87,19 +91,24 @@ export function GameProvider({ children }) {
     return op
   }, [state.mastery, startRound])
 
+  const rival = useMemo(
+    () => rivalFor(state.settings.character, state.settings.rival),
+    [state.settings.character, state.settings.rival],
+  )
+
   const answer = useCallback(value => {
-    dispatch({ type: 'ANSWER', value, at: Date.now() })
-  }, [])
+    dispatch({
+      type: 'ANSWER',
+      value,
+      at: Date.now(),
+      flourishBias: state.round?.mode === 'fixture' ? (rival.flourishBias ?? 0) : 0,
+    })
+  }, [state.round?.mode, rival])
 
   const resetProgress = useCallback(() => {
     clear()
     dispatch({ type: 'RESET_PROGRESS' })
   }, [])
-
-  const rival = useMemo(
-    () => rivalFor(state.settings.character, state.settings.rival),
-    [state.settings.character, state.settings.rival],
-  )
 
   /** In a derby you face your club's rival; otherwise a squad-mate keeps goal */
   const keeperId = useMemo(() => (

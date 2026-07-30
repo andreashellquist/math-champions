@@ -9,6 +9,7 @@ import TrophyScreen from './components/TrophyScreen'
 import RosterScreen from './components/RosterScreen'
 import MasteryMap from './components/MasteryMap'
 import SeasonScreen from './components/SeasonScreen'
+import ParentView from './components/ParentView'
 import UnlockToast from './components/UnlockToast'
 
 const SCREENS = {
@@ -22,9 +23,12 @@ const SCREENS = {
   season: SeasonScreen,
 }
 
+/* Reached only by URL, so it isn't part of the child's navigation */
+const PARENT_MODE = new URLSearchParams(window.location.search).has('parent')
+
 function Shell() {
   const { state, dispatch } = useGame()
-  const Screen = SCREENS[state.screen] ?? MenuScreen
+  const Screen = PARENT_MODE ? ParentView : (SCREENS[state.screen] ?? MenuScreen)
 
   useEffect(installAudioUnlock, [])
   useEffect(() => { setSoundEnabled(state.settings.sound) }, [state.settings.sound])

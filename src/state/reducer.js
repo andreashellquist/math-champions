@@ -18,6 +18,8 @@ import { classifyChoice } from '../game/distractors'
 import { applyAnswer, emptyState, MIN_REQUEUE_GAP, applyFixtureResult } from '../game/mastery'
 
 export const TOTAL_KICKS = 5
+/** Bonus kicks a perfect Shootout can earn. Additive only — never a tiebreak. */
+export const SUDDEN_DEATH_MAX = 10
 
 /** Ball trajectories — chosen deterministically so the reducer stays pure */
 export const TRAJECTORIES = ['top-left', 'top-right', 'bottom-left', 'daisy-cutter']
@@ -63,6 +65,9 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
     fact: r.fact, correct: false, latencyMs: 0,
     errorFamily: diagnosis?.family ?? null,
   })
+  const demotedTo = (r.fact.perFact ? mastery.f : mastery.s)[
+    r.fact.perFact ? r.fact.key : r.fact.strand
+  ]?.[0] ?? 0
   const trajectory = trajectoryFor(r.kickIdx, r.question.ans)
 
   let queue = r.queue
@@ -86,6 +91,7 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
       results: [...r.results, 'miss'],
       diagnosis,
       requeued: requeue,
+      demotedTo,
       trajectory,
       dive: diveFor(trajectory, false),
     },
@@ -255,8 +261,12 @@ export function reducer(state, action) {
           trajectory,
           dive: diveFor(trajectory, scored),
           deadline: null,
-          // How long they took decides the *spectacle*, never the outcome
-          flourish: timedOut ? 'retake' : latencyMs < (r.timerMs ?? 6000) * 0.5 ? 'screamer' : 'glove',
+          // How long they took decides the *spectacle*, never the outcome. A
+          // rival's bias tips which flourish plays — a fingertip graze reads as
+          // beating someone good — and cannot affect `scored`.
+          flourish: timedOut ? 'retake'
+            : latencyMs < (r.timerMs ?? 6000) * 0.5 * (1 - (action.flourishBias ?? 0) * 0.6)
+              ? 'screamer' : 'glove',
         },
       }
     }
@@ -297,7 +307,23 @@ export function reducer(state, action) {
       const r = state.round
       if (!r) return state
       const nextIdx = r.kickIdx + 1
-      const done = nextIdx >= (r.totalKicks ?? TOTAL_KICKS) && !r.suddenDeath
+      const total = r.totalKicks ?? TOTAL_KICKS
+
+      /* Sudden death, and only as a reward for a perfect regulation round.
+         Never as a tiebreak — a tiebreak invites a failure ending, whereas
+         sudden death earned by 5/5 cannot produce one. It ends on the first
+         non-goal, and the scoreline only ever goes up. */
+      const perfect = r.goals >= total && r.results.length >= total
+      const enteringSuddenDeath =
+        !r.suddenDeath && nextIdx >= total && r.mode === 'shootout' && perfect
+
+      const lastWasGoal = r.results.at(-1) !== 'miss'
+      const suddenDeathOver =
+        r.suddenDeath && (!lastWasGoal || r.results.length >= total + SUDDEN_DEATH_MAX)
+
+      const done = nextIdx >= total
+        ? (r.suddenDeath ? suddenDeathOver : !enteringSuddenDeath)
+        : false
 
       if (done || !action.question) {
         let mastery = { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } }
@@ -326,6 +352,7 @@ export function reducer(state, action) {
         ...state,
         round: {
           ...r,
+          suddenDeath: r.suddenDeath || enteringSuddenDeath,
           kickIdx: nextIdx,
           question: action.question,
           fact: action.fact,

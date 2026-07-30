@@ -3,7 +3,9 @@ import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { OPS, OP_ORDER, opName } from '../game/config'
 import { STRANDS_BY_OP, factKey, answerOf } from '../game/facts'
-import { MASTERED_BOX, masteredCount, strandProgress, labelForKey, workingOn } from '../game/mastery'
+import {
+  MASTERED_BOX, masteredCount, strandProgress, labelForKey, workingOn, boxName,
+} from '../game/mastery'
 import { getHint } from '../game/hints'
 
 /**
@@ -177,7 +179,7 @@ export default function MasteryMap() {
       <ul className="map-key" aria-hidden="true">
         <li><i className="mm-cell" /> {t('map.unplanted')}</li>
         <li><i className="mm-cell seen" data-box="2" /> {t('map.growing')}</li>
-        <li><i className="mm-cell seen" data-box="5" /> {t('map.solid')}</li>
+        <li><i className="mm-cell seen" data-box="5" /> {t(`box.${boxName(5)}`)}</li>
       </ul>
 
       {ladder.length > 0 && (
@@ -208,6 +210,7 @@ export default function MasteryMap() {
               <span key={i} className={`pip${picked.box >= i ? ' on' : ''}`} />
             ))}
           </div>
+          <p className="cell-level">{t('box.at', { name: t(`box.${boxName(picked.box)}`) })}</p>
           <div className="result-links">
             <button className="btn btn-gold" onClick={() => startRound(op, { mode: 'training' })}>
               {t('map.practise')}

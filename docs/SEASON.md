@@ -328,8 +328,9 @@ What to do instead:
 - [ ] **Uttagningen gates** — the last substantial piece. Certify, never block;
       untimed; only offered at ≥85% predicted pass; failure reported as
       diagnosis with the missed facts queued first.
-- [ ] Sudden death on a 5/5 Shootout (`suddenDeath` flag exists, nothing sets it)
-- [ ] Flourish bias per rival, capped `clockScale ≥ 0.8` and never applied when
-      `extraTime > 1`
-- [ ] Box-level names (`Provspel → Kapten`) so a demotion reads without shame
-- [ ] Parent view behind `?parent=1` — the metrics are already tracked
+- [x] Sudden death on a 5/5 Shootout — earned by a perfect round, never a
+      tiebreak, ends on the first non-goal, capped at +10
+- [x] Flourish bias per rival, `clockScale` floored at 0.8 and ignored entirely
+      when `extraTime > 1`
+- [x] Box-level names (`Provspel → Kapten`) so a demotion reads without shame
+- [x] Parent view behind `?parent=1`

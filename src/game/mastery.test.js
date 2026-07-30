@@ -295,3 +295,29 @@ describe('fatigue degrades content, never access', () => {
     expect(isFatiguing(s, 'addition')).toBe(false)
   })
 })
+
+describe('workingOn only reports facts the ladder can serve', () => {
+  it('ignores records that do not name a real fact', () => {
+    // Storage validates the shape of a key, not whether it names a real fact,
+    // so a legacy or corrupt record must not reach a parent as `0 − 0` with a
+    // nonsense strategy attached.
+    const s = emptyState()
+    s.f['s0.0'] = [1, 0, 0, 9]        // n − n, which no strand generates
+    s.f['s1.0'] = [1, 0, 0, 8]        // n − 0, likewise
+    s.f['zz9.9'] = [1, 0, 0, 7]       // not even an operation
+    const real = STRANDS_BY_OP.multiplication[0].facts[3]
+    s.f[real.key] = [1, 0, 0, 2]
+
+    const w = workingOn(s, 10)
+    expect(w.map(x => x.key)).toEqual([real.key])
+  })
+
+  it('still surfaces real facts in most-missed order', () => {
+    const s = emptyState()
+    const [f1, f2, f3] = STRANDS_BY_OP.multiplication[0].facts
+    s.f[f1.key] = [1, 0, 0, 2]
+    s.f[f2.key] = [1, 0, 0, 9]
+    s.f[f3.key] = [1, 0, 0, 5]
+    expect(workingOn(s, 3).map(x => x.key)).toEqual([f2.key, f3.key, f1.key])
+  })
+})

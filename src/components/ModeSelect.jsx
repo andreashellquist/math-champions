@@ -4,6 +4,7 @@ import { OPS, OP_ORDER, opName } from '../game/config'
 import { recentAccuracy, opProgress, MASTERED_BOX, mixedReady } from '../game/mastery'
 import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
+import { clockScaleFor } from '../game/rivals'
 
 /**
  * Shootout is offered only to a child who already has the facts — it's a
@@ -33,11 +34,14 @@ export default function ModeSelect() {
   const mixedOps = mixedReady(mastery, OP_ORDER)
 
   const play = (op, mode) => {
-    const timerMs = mode === 'shootout'
+    const timerMs = mode === 'shootout' || mode === 'fixture'
       // `level` is deliberately gone: deriving the limit from content mastery
       // meant the clock tightened as the child improved, which is exactly the
       // "you are slow" signal the design exists to avoid.
-      ? computeTimeLimit({ op, latencies: mastery.l, extraTime: state.settings.extraTime })
+      ? Math.round(
+          computeTimeLimit({ op, latencies: mastery.l, extraTime: state.settings.extraTime })
+          * clockScaleFor(mode === 'fixture' ? rival : null, state.settings.extraTime),
+        )
       : null
     startRound(op, { mode, timerMs })
   }

@@ -13,7 +13,7 @@
  * reconstruction, so a slow-but-correct answer doesn't advance the box.
  */
 import {
-  STRANDS_BY_OP, STRAND_BY_ID, masteryKey, sampleStrandFact,
+  STRANDS_BY_OP, STRAND_BY_ID, ALL_FACTS, masteryKey, sampleStrandFact,
   inverseMultiplicationKey, factKey,
 } from './facts'
 import { rng as defaultRng } from './rng'
@@ -26,6 +26,16 @@ const BOX_GAP = [0, 3, 8, 20, 45, 100]
 const LAT_GATE_MS = [6000, 6000, 4500, 4500, 3000, 3000]
 
 export const MAX_BOX = 5
+
+/**
+ * Squad progression, one name per Leitner box.
+ *
+ * The point is that a *demotion* has to be sayable without shame. "Box 4 → box
+ * 2" is a downgrade; "back to the A-squad for a bit more training" is a normal
+ * thing that happens to real players, and it carries the same information.
+ */
+export const BOX_NAMES = ['trial', 'academy', 'reserve', 'squad', 'first11', 'captain']
+export const boxName = box => BOX_NAMES[Math.max(0, Math.min(MAX_BOX, box))]
 export const MASTERED_BOX = 4
 /** Re-asking immediately measures echoic memory, not learning */
 export const MIN_REQUEUE_GAP = 3
@@ -39,6 +49,9 @@ const LATENCY_MEMORY = 30
 const ERROR_MEMORY = 20
 
 export const OP_KEYS = ['addition', 'subtraction', 'multiplication', 'division']
+
+/** Every fact key the ladder can actually serve */
+const KNOWN_FACT_KEYS = new Set(ALL_FACTS.map(f => f.key))
 
 export function emptyState() {
   return {
@@ -508,6 +521,12 @@ export function masteredCount(state) {
 export function workingOn(state, limit = 5) {
   return Object.entries(state.f)
     .filter(([, rec]) => rec[3] > 0 && rec[0] < MASTERED_BOX)
+    // Only facts the ladder can actually serve. Storage validates the *shape*
+    // of a key, not whether it names a real fact, so a legacy or corrupt record
+    // would otherwise surface to a parent as `0 − 0` with a nonsense strategy
+    // attached. Filtered here rather than dropped on load, so that changing the
+    // ladder later can never silently delete a child's progress.
+    .filter(([key]) => KNOWN_FACT_KEYS.has(key))
     .sort((a, b) => b[1][3] - a[1][3])
     .slice(0, limit)
     .map(([key, rec]) => ({ key, misses: rec[3], box: rec[0] }))

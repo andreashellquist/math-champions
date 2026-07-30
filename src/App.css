@@ -992,3 +992,15 @@ body::before {
   box-shadow: 0 10px 30px rgba(0,0,0,.28);
 }
 .week-big { font-size: 3rem; font-weight: 900; color: #166b39; font-variant-numeric: tabular-nums; }
+.cell-level { color: #5f5f5f; font-size: .82rem; margin-bottom: 10px; }
+
+/* ── PARENT VIEW ─────────────────────────── */
+.parent-line { color: var(--ink); font-size: .92rem; padding: 4px 0; }
+.parent-note {
+  background: #f0faf4;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  color: #166b39;
+  font-size: .88rem;
+}

@@ -41,6 +41,13 @@ export const RIVALS = {
     /** Reach — a taller keeper covers more goal. Presentation only. */
     scale: 1.08,
     diveStyle: 'full',
+    /** Bias toward the fingertip-graze flourish — beating someone good feels
+        better than walking it in. Presentation only. */
+    flourishBias: 0.5,
+    /** Clock tightening. Floored at 0.8 and ignored entirely when the child has
+        asked for extra time — a rival must never claw back an accessibility
+        setting. */
+    clockScale: 0.9,
     gk: { shirt: '#F2E8D5', pattern: 'hoops', accent: '#DA291C', gloves: '#DA291C', shorts: '#1A1A1A', socks: '#DA291C', trim: '#DA291C' },
   },
 
@@ -50,6 +57,8 @@ export const RIVALS = {
     hair: 'flow', hairColor: '#6B4A2F',
     scale: 1.12,
     diveStyle: 'statue',
+    flourishBias: 0.7,
+    clockScale: 0.85,
     gk: { shirt: '#E3D0F5', pattern: 'solid', accent: '#5C2D91', gloves: '#5C2D91', shorts: '#5C2D91', socks: '#E3D0F5', trim: '#FEBE10' },
   },
 
@@ -59,6 +68,8 @@ export const RIVALS = {
     hair: 'curls', hairColor: '#1A1310', skin: '#B07B4E',
     scale: 1.04,
     diveStyle: 'quick',
+    flourishBias: 0.4,
+    clockScale: 0.95,
     gk: { shirt: '#FFE234', pattern: 'hoops', accent: '#004D98', gloves: '#C81B5A', shorts: '#004D98', socks: '#FFE234', trim: '#C81B5A' },
   },
 
@@ -68,6 +79,8 @@ export const RIVALS = {
     hair: 'afro', hairColor: '#1B1310', skin: '#8D5A3B',
     scale: 1.06,
     diveStyle: 'full',
+    flourishBias: 0.6,
+    clockScale: 0.9,
     gk: { shirt: '#FFB84D', pattern: 'solid', accent: '#DA291C', gloves: '#DA291C', shorts: '#023474', socks: '#FFB84D', trim: '#DA291C' },
   },
 
@@ -77,6 +90,8 @@ export const RIVALS = {
     hair: 'buzz', hairColor: '#C89B5A', skin: '#EFC6A6',
     scale: 1.0,
     diveStyle: 'quick',
+    flourishBias: 0.3,
+    clockScale: 1.0,
     gk: { shirt: '#F2F2F2', pattern: 'hoops', accent: '#C60C30', gloves: '#C60C30', shorts: '#1F3A5F', socks: '#F2F2F2', trim: '#C60C30' },
   },
 }
@@ -103,3 +118,18 @@ export function rivalFor(strikerId, override = null) {
 }
 
 export const getRival = id => RIVALS[id] ?? null
+
+/** Hard floor on how much a rival may tighten the clock */
+export const MIN_CLOCK_SCALE = 0.8
+
+/**
+ * How much this rival shortens the Shootout clock.
+ *
+ * Returns 1 (no change) whenever the child has asked for extra time. That
+ * setting is the accessibility escape hatch, and a rival must not be able to
+ * take it back.
+ */
+export function clockScaleFor(rival, extraTime = 1) {
+  if (!rival || extraTime > 1) return 1
+  return Math.max(MIN_CLOCK_SCALE, rival.clockScale ?? 1)
+}

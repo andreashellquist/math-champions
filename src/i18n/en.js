@@ -198,6 +198,52 @@ export default {
     ok: "Let's go!",
   },
 
+  box: {
+    trial:    'Trialist',
+    academy:  'Academy',
+    reserve:  'Reserves',
+    squad:    'First squad',
+    first11:  'Starting eleven',
+    captain:  'Captain',
+    at: 'Level: {name}',
+    demoted: 'This one goes back to {name} for a bit more training.',
+    promoted: 'Promoted to {name}!',
+  },
+
+  parent: {
+    title: "For grown-ups",
+    subtitle: "What is actually happening in practice.",
+    automatic: "facts known straight away",
+    rounds: "rounds played",
+    firstTryTitle: "Right on the first try",
+    firstTry: "{n} of the last {total}",
+    notStarted: "not started yet",
+    workingOn: "Working on right now",
+    rebound: "After reading a trick, they often find the answer on the next try.",
+    season: "In the season",
+    seasonAt: "Season {season}, {comp}. {won} ties won against {rival}.",
+    seasonDone: "Season {n} complete.",
+    footer: "No comparisons to other children, no grades. What is here is what they can do and what comes next.",
+    speed: {
+      quicker: "Answers are coming faster than before.",
+      steady: "Steady pace.",
+      slower: "Taking a little longer — the questions got harder.",
+    },
+    error: {
+      buggy_algorithm: "Most common slip right now: borrowing and tens in subtraction. Worth practising tens and ones side by side.",
+      place_value: "Most common slip right now: the carried ten goes missing. Worth practising tens and ones together.",
+      near_fact: "Most common slip right now: the neighbouring fact takes over, e.g. the square next door. Worth practising doubles.",
+      adjacent_multiple: "Most common slip right now: one group too many or too few. Skip counting helps.",
+      off_by_one: "Most common slip right now: one step out. Usually pace rather than knowledge.",
+      wrong_op: "Most common slip right now: the operation gets mixed up. Worth reading the sign out loud.",
+      operand_echo: "Most common slip right now: one of the numbers in the question comes back as the answer.",
+      strategy_slip: "Most common slip right now: right trick, but the last adjustment is forgotten.",
+      digit_reversal: "Most common slip right now: right digits, reversed.",
+      identity: "Most common slip right now: the rules for zero and one.",
+      fallback: "No clear pattern right now.",
+    },
+  },
+
   unlock: '🔓 {icon} {name} unlocked!',
 
   /* ── HINTS ──────────────────────────────────────────────── */

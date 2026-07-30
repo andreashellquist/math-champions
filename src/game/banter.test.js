@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { banter, BANTER_MOMENTS } from './banter'
-import { RIVALS, rivalFor, RIVAL_IDS } from './rivals'
+import { RIVALS, rivalFor, RIVAL_IDS, clockScaleFor, MIN_CLOCK_SCALE } from './rivals'
 import { ROSTER_IDS } from './characters'
-import { setLocale, LOCALES } from '../i18n'
+import { setLocale, LOCALES, t } from '../i18n'
+import { boxName } from './mastery'
 import { makeRng } from './rng'
 
 const LOCALE_CODES = Object.keys(LOCALES)
@@ -151,5 +152,59 @@ describe('app-wide tone', () => {
     for (const [key, value] of strings) {
       expect(value, `${key}: "${value}"`).not.toMatch(shaming)
     }
+  })
+})
+
+describe('rival difficulty knobs', () => {
+  it('never lets a rival tighten the clock past the floor', () => {
+    for (const rival of Object.values(RIVALS)) {
+      expect(clockScaleFor(rival, 1)).toBeGreaterThanOrEqual(MIN_CLOCK_SCALE)
+      expect(clockScaleFor(rival, 1)).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('never applies any tightening when the child asked for extra time', () => {
+    // That setting is the accessibility escape hatch. A rival must not be able
+    // to claw it back.
+    for (const rival of Object.values(RIVALS)) {
+      expect(clockScaleFor(rival, 1.3)).toBe(1)
+      expect(clockScaleFor(rival, 2)).toBe(1)
+    }
+  })
+
+  it('gives every rival a flourish bias in range', () => {
+    for (const rival of Object.values(RIVALS)) {
+      expect(rival.flourishBias).toBeGreaterThanOrEqual(0)
+      expect(rival.flourishBias).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('keeps every difficulty knob to presentation or question choice', () => {
+    // Nothing a rival carries may touch whether a correct answer scores
+    for (const rival of Object.values(RIVALS)) {
+      expect(rival).not.toHaveProperty('saveChance')
+      expect(rival).not.toHaveProperty('goalChance')
+      expect(rival).not.toHaveProperty('difficulty.outcome')
+    }
+  })
+})
+
+describe('box level names', () => {
+  it('names every box, in both languages', () => {
+    for (const locale of LOCALE_CODES) {
+      setLocale(locale)
+      for (let box = 0; box <= 5; box++) {
+        const name = t(`box.${boxName(box)}`)
+        expect(name, `${locale} box ${box}`).not.toMatch(/^box\./)
+      }
+    }
+    setLocale('sv')
+  })
+
+  it('frames a demotion as a squad move rather than a downgrade', () => {
+    setLocale('sv')
+    const msg = t('box.demoted', { name: t(`box.${boxName(2)}`) })
+    expect(msg).toContain('Reserv')
+    expect(msg.toLowerCase()).not.toMatch(/\b(ner|sämre|förlorat|misslyck)/)
   })
 })

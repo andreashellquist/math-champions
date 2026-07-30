@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reducer, initialState } from './reducer'
+import { reducer, initialState, SUDDEN_DEATH_MAX } from './reducer'
 import { setLocale } from '../i18n'
 import { opName } from '../game/config'
 import { emptyState } from '../game/mastery'
@@ -258,5 +258,77 @@ describe('first-try accuracy is not inflated by rebounds', () => {
     const s0 = roundInProgress()
     const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 2000 })
     expect(s1.mastery.r.addition.at(-1)).toBe(1)
+  })
+})
+
+describe('sudden death', () => {
+  /** Answer every kick correctly to the end of regulation */
+  function perfectRound(kicks = 5) {
+    let s = roundInProgress({ mode: 'shootout', totalKicks: kicks })
+    for (let i = 0; i < kicks; i++) {
+      s = reducer(s, { type: 'ANSWER', value: s.round.question.ans, at: 2000 + i * 100 })
+      const nextFact = s.round.queue[s.round.kickIdx + 1] ?? QUEUE_FACTS[0]
+      s = reducer(s, {
+        type: 'ADVANCE',
+        fact: nextFact,
+        question: buildQuestion({ fact: nextFact, format: 'standard', optionCount: 3, rng }),
+        at: 3000 + i * 100,
+      })
+    }
+    return s
+  }
+
+  it('is earned by a perfect round, never used as a tiebreak', () => {
+    // A tiebreak invites a failure ending; sudden death earned by 5/5 cannot
+    // produce one, because the scoreline only ever goes up.
+    const s = perfectRound()
+    expect(s.round.suddenDeath).toBe(true)
+    expect(s.screen).toBe('game')
+    expect(s.round.goals).toBe(5)
+  })
+
+  it('does not trigger on an imperfect round', () => {
+    let s = roundInProgress({ mode: 'shootout', totalKicks: 5, kickIdx: 4, goals: 3,
+      results: ['goal', 'goal', 'goal', 'miss'] })
+    s = reducer(s, { type: 'ADVANCE', fact: QUEUE_FACTS[1], question: s.round.question, at: 9000 })
+    expect(s.screen).toBe('result')
+    expect(s.round.suddenDeath).toBeFalsy()
+  })
+
+  it('does not trigger outside a shootout', () => {
+    let s = roundInProgress({ mode: 'training', totalKicks: 5, kickIdx: 4, goals: 5,
+      results: ['goal', 'goal', 'goal', 'goal', 'goal'] })
+    s = reducer(s, { type: 'ADVANCE', fact: QUEUE_FACTS[1], question: s.round.question, at: 9000 })
+    expect(s.screen).toBe('result')
+  })
+
+  it('ends on the first non-goal, and the score never goes down', () => {
+    let s = perfectRound()
+    const before = s.round.goals
+    // a bonus kick that is missed
+    s = { ...s, round: { ...s.round, results: [...s.round.results, 'miss'] } }
+    s = reducer(s, { type: 'ADVANCE', fact: QUEUE_FACTS[1], question: s.round.question, at: 9999 })
+    expect(s.screen).toBe('result')
+    expect(s.round.goals).toBe(before)
+  })
+
+  it('caps the bonus so it cannot run forever', () => {
+    let s = perfectRound()
+    s = { ...s, round: { ...s.round,
+      results: [...Array(5 + SUDDEN_DEATH_MAX).fill('goal')] } }
+    s = reducer(s, { type: 'ADVANCE', fact: QUEUE_FACTS[1], question: s.round.question, at: 9999 })
+    expect(s.screen).toBe('result')
+  })
+})
+
+describe('a demotion is named, not silent', () => {
+  it('reports which level the fact drops to', () => {
+    let s = roundInProgress({ kickIdx: 3 })
+    const q = s.round.question
+    const [w1, w2] = q.opts.filter(o => o !== q.ans)
+    s = reducer(s, { type: 'ANSWER', value: w1, at: 2000 })
+    s = reducer(s, { type: 'ANSWER', value: w2, at: 3000 })
+    expect(s.round.demotedTo).toBe(0)
+    expect(typeof s.round.demotedTo).toBe('number')
   })
 })

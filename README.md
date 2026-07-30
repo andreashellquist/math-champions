@@ -169,6 +169,19 @@ cap teaches that engaging deeply gets you cut off. Instead fatigue degrades what
 the next round *contains*, and `one more` / `done for today` get equal weight
 after a long sitting.
 
+## For grown-ups
+
+`?parent=1` shows what is actually happening: facts known straight away,
+first-try accuracy per operation as a count of N, a speed *direction* (never a
+figure), which facts are being worked on with the strategy the app teaches
+attached, and the dominant error pattern made actionable.
+
+Written assuming the child reads it over a shoulder — no red, no norms, no
+comparison to other children, no percentages as headlines, and gaps stated as
+what's next rather than what's missing. The Shootout appears as participation
+only: publish a timed score to a parent and some will start drilling the timed
+mode, which is the exact failure the design avoids.
+
 ## Accessibility
 
 Keyboard `1`/`2`/`3` answers, `Escape` menu, `Space` extends the Shootout clock.
@@ -185,7 +198,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-169 tests. The valuable ones are property-based: every hint is checked for
+183 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
@@ -210,6 +223,5 @@ Regression tests exist for each fixed bug, named after the bug.
 - [ ] Seasonal pitch themes
 
 ### Technical
-- [ ] Parent view (`?parent=1`) — the metrics are already tracked
 - [ ] ESLint config
 - [ ] RTL integration test for the full kick pipeline

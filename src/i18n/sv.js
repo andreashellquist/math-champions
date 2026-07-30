@@ -206,6 +206,52 @@ export default {
     ok: 'Kör!',
   },
 
+  box: {
+    trial:    'Provspel',
+    academy:  'Akademin',
+    reserve:  'Reserv',
+    squad:    'A-truppen',
+    first11:  'Startelvan',
+    captain:  'Kapten',
+    at: 'Nivå: {name}',
+    demoted: 'Den här går tillbaka till {name} för lite mer träning.',
+    promoted: 'Uppflyttad till {name}!',
+  },
+
+  parent: {
+    title: "För vuxna",
+    subtitle: "Vad som faktiskt händer i träningen.",
+    automatic: "tal som sitter direkt",
+    rounds: "omgångar spelade",
+    firstTryTitle: "Rätt på första försöket",
+    firstTry: "{n} av de senaste {total}",
+    notStarted: "inte igång än",
+    workingOn: "Tränar på just nu",
+    rebound: "Efter att ha läst ett knep hittar hen ofta svaret på nästa försök.",
+    season: "I säsongen",
+    seasonAt: "Säsong {season}, {comp}. {won} vunna möten mot {rival}.",
+    seasonDone: "Säsong {n} avklarad.",
+    footer: "Inga jämförelser med andra barn, inga betyg. Det som står här är vad hen kan och vad som kommer härnäst.",
+    speed: {
+      quicker: "Svaren kommer snabbare än tidigare.",
+      steady: "Jämnt tempo.",
+      slower: "Tar lite längre tid — talen har blivit svårare.",
+    },
+    error: {
+      buggy_algorithm: "Vanligaste snedsteget nu: lån och tiotal i subtraktion. Värt att öva med tiotalen och entalen bredvid varandra.",
+      place_value: "Vanligaste snedsteget nu: minnessiffran försvinner. Värt att öva tiotal och ental tillsammans.",
+      near_fact: "Vanligaste snedsteget nu: grannfaktan tar över, t.ex. kvadraten intill. Värt att öva dubblor.",
+      adjacent_multiple: "Vanligaste snedsteget nu: en grupp för mycket eller för lite. Hoppräkning hjälper.",
+      off_by_one: "Vanligaste snedsteget nu: ett steg fel. Oftast tempo, inte kunskap.",
+      wrong_op: "Vanligaste snedsteget nu: räknesättet blandas ihop. Värt att läsa tecknet högt.",
+      operand_echo: "Vanligaste snedsteget nu: ett av talen i uppgiften upprepas som svar.",
+      strategy_slip: "Vanligaste snedsteget nu: rätt knep, men sista justeringen glöms.",
+      digit_reversal: "Vanligaste snedsteget nu: rätt siffror i omvänd ordning.",
+      identity: "Vanligaste snedsteget nu: reglerna för noll och ett.",
+      fallback: "Inget tydligt mönster just nu.",
+    },
+  },
+
   unlock: '🔓 {icon} {name} upplåst!',
 
   /* ── KNEP ───────────────────────────────────────────────── */
