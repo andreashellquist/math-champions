@@ -1,7 +1,9 @@
-import { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react'
+import { createContext, useContext, useReducer, useEffect, useCallback, useMemo, useRef } from 'react'
 import { reducer, initialState, TOTAL_KICKS } from './reducer'
 import { load, save, flush, clear, loadSettings, saveSettings } from '../game/storage'
 import { buildRoundQueue, questionFor } from '../game/round'
+import { suggestOp } from '../game/mastery'
+import { OPS, OP_ORDER } from '../game/config'
 import { keeperFor } from '../game/characters'
 import { rivalFor } from '../game/rivals'
 import { setLocale, DEFAULT_LOCALE } from '../i18n'
@@ -22,6 +24,10 @@ export function GameProvider({ children }) {
     },
   )
 
+  /* Rounds played since the app was opened. Used only to soften the landing
+     after a long sitting — never to cap or block anything. */
+  const sessionRounds = useRef(0)
+
   /* Persistence lives in effects, not inside the reducer. State updaters must
      be pure — React re-invokes them in StrictMode and under concurrent
      rendering, so a setItem inside one can fire twice. */
@@ -39,14 +45,15 @@ export function GameProvider({ children }) {
     }
   }, [])
 
-  const startRound = useCallback((op, { mode = 'training', timerMs = null } = {}) => {
-    const queue = buildRoundQueue(state.mastery, op, { mode })
+  const startRound = useCallback((op, { mode = 'training', timerMs = null, kicks = TOTAL_KICKS } = {}) => {
+    const queue = buildRoundQueue(state.mastery, op, { mode, size: kicks })
     if (!queue.length) return
+    sessionRounds.current += 1
     dispatch({
       type: 'START_ROUND',
-      op, mode, queue, timerMs,
+      op, mode, queue, timerMs, totalKicks: kicks,
       fact: queue[0],
-      question: questionFor(state.mastery, queue[0]),
+      question: questionFor(state.mastery, queue[0], { mode }),
       startedAt: Date.now(),
     })
   }, [state.mastery])
@@ -60,11 +67,25 @@ export function GameProvider({ children }) {
     dispatch({
       type: 'ADVANCE',
       fact,
-      question: fact ? questionFor(state.mastery, fact) : null,
+      question: fact ? questionFor(state.mastery, fact, { mode: r.mode }) : null,
       rivalId: rival.id,
       at: Date.now(),
     })
   }, [state.round, state.mastery])
+
+  /**
+   * Just start. One tap, no decision.
+   *
+   * Always `training` — a one-tap start must never drop a child into a timed or
+   * adversarial round they didn't choose. The first round of a session is short,
+   * because that round carries the initiation cost.
+   */
+  const quickStart = useCallback(() => {
+    const unlocked = OP_ORDER.filter(op => state.mastery.agg.correct >= OPS[op].unlock)
+    const op = suggestOp(state.mastery, unlocked)
+    startRound(op, { mode: 'training', kicks: sessionRounds.current === 0 ? 3 : TOTAL_KICKS })
+    return op
+  }, [state.mastery, startRound])
 
   const answer = useCallback(value => {
     dispatch({ type: 'ANSWER', value, at: Date.now() })
@@ -91,13 +112,15 @@ export function GameProvider({ children }) {
     state,
     dispatch,
     startRound,
+    quickStart,
     advance,
     answer,
     resetProgress,
     keeperId,
     rival,
-    totalKicks: TOTAL_KICKS,
-  }), [state, startRound, advance, answer, resetProgress, keeperId, rival])
+    totalKicks: state.round?.totalKicks ?? TOTAL_KICKS,
+    sessionRounds: sessionRounds.current,
+  }), [state, startRound, quickStart, advance, answer, resetProgress, keeperId, rival])
 
   return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>
 }

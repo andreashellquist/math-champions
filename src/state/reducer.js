@@ -123,6 +123,7 @@ export function reducer(state, action) {
         round: {
           op: action.op,
           mode: action.mode ?? 'training',
+          totalKicks: action.totalKicks ?? TOTAL_KICKS,
           queue: action.queue ?? [],
           kickIdx: 0,
           results: [],
@@ -341,6 +342,25 @@ export function reducer(state, action) {
           askedAt: action.at,
           deadline: r.clockOff || !r.timerMs ? null : action.at + r.timerMs,
         },
+      }
+    }
+
+    /**
+     * The child chose to stop mid-round.
+     *
+     * A child who cannot leave will eventually leave by closing the app, and
+     * that exit teaches nothing and records nothing. Deliberately does NOT call
+     * applyFixtureResult: a round the child ended must never increment
+     * `played`, which is the closest thing to a loss tally in the whole model.
+     */
+    case 'END_ROUND': {
+      const r = state.round
+      if (!r) return state
+      return {
+        ...state,
+        screen: 'result',
+        mastery: { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } },
+        round: { ...r, phase: 'done', stoppedEarly: true },
       }
     }
 

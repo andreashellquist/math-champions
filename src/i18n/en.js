@@ -15,6 +15,9 @@ export default {
   menu: {
     title: '⚽ Math Champions',
     subtitle: 'Train like the pros — score big on and off the pitch ⚽',
+    start: "▶ Let's go",
+    pickSelf: 'Pick myself →',
+    picked: "{icon} {op}. Facts you haven't done in a while.",
     play: 'Play',
     changePlayer: '👕 Change player',
     stats: '🏆 My stats',
@@ -41,6 +44,7 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    addTime: 'More time',
     tapNext: 'Tap for next →',
     stopHere: '👋 Done for now',
     showTrick: '🧠 Give me a tip!',
@@ -65,6 +69,10 @@ export default {
   },
 
   result: {
+    stoppedEarly: "You took {n} penalties. We'll pick up where you left off.",
+    oneMore: '▶ One more',
+    doneToday: '👋 Done for today',
+    sessionSummary: 'Good session. {n} facts are sitting better now.',
     nextRound: '▶ Next round',
     changeTraining: 'Change training',
     brainPoints: '🧠 Brain points',
@@ -112,6 +120,8 @@ export default {
   fixture: {
     label: '🧤 The Derby',
     note: 'In the derby {rival} picks the questions — he takes your trickiest ones. He never picks the outcome. Get it right and you score.',
+    difficulty: 'How hard this opponent is',
+    chip: { questions: 'Questions', options: 'Options', length: 'Length' },
     intro: '{rival} picked five tricky ones. Ready?',
     picked: '{rival} chose these.',
     goalNod: '{rival} nods. Nothing he could do.',
@@ -146,6 +156,8 @@ export default {
   map: {
     title: '🌱 Your pitch',
     grown: '{n} of {total} squares grown',
+    grownSimple: '{n} squares grown',
+    nextThree: 'Next three:',
     gridLabel: 'Map of {op}',
     cellLabel: '{fact}, box {box} of 5',
     unplanted: 'Unplanted',

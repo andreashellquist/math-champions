@@ -15,7 +15,7 @@ const TOTAL_FACTS = OP_ORDER.reduce(
   (n, op) => n + (STRANDS_BY_OP[op] ?? []).reduce((m, s) => m + s.facts.length, 0), 0)
 
 export default function MenuScreen() {
-  const { state, dispatch, keeperId } = useGame()
+  const { state, dispatch, keeperId, quickStart } = useGame()
   const { t } = useTranslation()
   const { agg } = state.mastery
   const me = getCharacter(state.settings.character)
@@ -89,8 +89,13 @@ export default function MenuScreen() {
         </span>
       </div>
 
-      <button className="btn btn-gold" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'mode' })}>
-        {t('menu.play')}
+      {/* One tap, no decision. The picker is still there for a child who
+          wants it, demoted to a link. */}
+      <button className="btn btn-gold" onClick={quickStart}>
+        {t('menu.start')}
+      </button>
+      <button className="link-btn" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'mode' })}>
+        {t('menu.pickSelf')}
       </button>
 
       <div className="menu-links">

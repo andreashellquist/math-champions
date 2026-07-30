@@ -23,6 +23,9 @@ export default {
   menu: {
     title: '⚽ Mattemästarna',
     subtitle: 'Träna som proffsen — gör mål på planen och i matten ⚽',
+    start: '▶ Kör igång',
+    pickSelf: 'Välj själv →',
+    picked: '{icon} {op}. Tal du inte kört på ett tag.',
     play: 'Spela',
     changePlayer: '👕 Byt spelare',
     stats: '🏆 Min statistik',
@@ -49,6 +52,7 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    addTime: 'Mer tid',
     tapNext: 'Tryck för nästa →',
     stopHere: '👋 Klar för nu',
     showTrick: '🧠 Tipsa mig!',
@@ -73,6 +77,10 @@ export default {
   },
 
   result: {
+    stoppedEarly: 'Du la {n} straffar. Vi fortsätter där du slutade.',
+    oneMore: '▶ En till',
+    doneToday: '👋 Klar för idag',
+    sessionSummary: 'Bra pass. {n} tal sitter bättre nu.',
     nextRound: '▶ Nästa omgång',
     changeTraining: 'Byt träning',
     brainPoints: '🧠 Hjärnpoäng',
@@ -120,6 +128,8 @@ export default {
   fixture: {
     label: '🧤 Derbyt',
     note: 'I derbyt väljer {rival} frågorna — han tar dina knepigaste. Han väljer aldrig utgången. Har du rätt gör du mål.',
+    difficulty: 'Så här svår är motståndaren',
+    chip: { questions: 'Frågor', options: 'Svarsalternativ', length: 'Längd' },
     intro: '{rival} har plockat ut fem kluriga. Redo?',
     picked: '{rival} valde de här.',
     goalNod: '{rival} nickar. Den gick inte att ta.',
@@ -154,6 +164,8 @@ export default {
   map: {
     title: '🌱 Din plan',
     grown: '{n} av {total} rutor odlade',
+    grownSimple: '{n} rutor odlade',
+    nextThree: 'Nästa tre:',
     gridLabel: 'Kartan över {op}',
     cellLabel: '{fact}, ruta {box} av 5',
     unplanted: 'Osådd',

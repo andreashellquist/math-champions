@@ -45,8 +45,10 @@ export default function GameScreen() {
   const [confettiKey, setConfettiKey] = useState(0)
   const [urgency, setUrgency] = useState(0)
   const [line, setLine] = useState(null)
+  const [keyboardSeen, setKeyboardSeen] = useState(false)
   const questionRef = useRef(null)
   const skipArmedAt = useRef(null)
+  const extendedRef = useRef(false)
 
   /* Every timeout goes through here so they can all be cancelled on unmount.
      The old code created four bare setTimeouts per kick with no handles, so
@@ -88,7 +90,7 @@ export default function GameScreen() {
     else if (frac <= 0.4 && urgency < 1) { setUrgency(1); sfx.urgent1() }
   }, [secondsLeft, shootout, r?.timerMs, urgency])
 
-  useEffect(() => { setUrgency(0) }, [r?.kickIdx])
+  useEffect(() => { setUrgency(0); extendedRef.current = false }, [r?.kickIdx])
 
   /* The rival greets at kick-off and applauds a goal — and says nothing at all
      when the child misses. See game/banter.js. */
@@ -130,8 +132,12 @@ export default function GameScreen() {
     // Let the child outrun the animation. This is a self-pacing device, not a
     // shortcut: a child who taps has told us they don't need the beat, and a
     // child who wants to watch the goal still watches it.
-    skipArmedAt.current = performance.now() + BEATS.skipFloor
-    return () => { skipArmedAt.current = null }
+    // Date.now rather than performance.now: this is a 250ms UI guard, drift is
+    // irrelevant, and it stays testable under fake timers.
+    skipArmedAt.current = Date.now() + BEATS.skipFloor
+    // Deliberately no cleanup nulling this. The effect re-runs when the phase
+    // becomes `celebrating`, and disarming there would kill the skip in the
+    // 600ms window where the child is most likely to use it.
   }, [r?.phase, r?.kickIdx])   // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Auto-resolve the reveal. The retrieval attempt has already been made twice;
@@ -156,6 +162,7 @@ export default function GameScreen() {
   useEffect(() => {
     if (!r) return
     const onKey = e => {
+      setKeyboardSeen(true)
       if (e.key === 'Escape') { dispatch({ type: 'NAVIGATE', screen: 'menu' }); return }
       if (e.key === ' ' || e.key === '+') {
         if (shootout && r.timerMs) { e.preventDefault(); extend(r.timerMs) }
@@ -178,10 +185,14 @@ export default function GameScreen() {
   /** Tap the pitch to move on. Armed 250ms in, so it can't be the answer tap
       bouncing. Never armed during `reveal` — that beat is already tap-gated. */
   const skipAhead = useCallback(() => {
-    if (!skipArmedAt.current || performance.now() < skipArmedAt.current) return
+    const ph = r?.phase
+    // Only ever active while an outcome is playing out — never during `asking`
+    // (a stray pitch tap must not skip a question) and never during `reveal`.
+    if (ph !== 'resolving' && ph !== 'celebrating') return
+    if (!skipArmedAt.current || Date.now() < skipArmedAt.current) return
     skipArmedAt.current = null
     clearTimers()
-    if (r?.phase === 'resolving') dispatch({ type: 'CELEBRATE' })
+    if (ph === 'resolving') dispatch({ type: 'CELEBRATE' })
     advance()
   }, [r?.phase, advance, dispatch, clearTimers])
 
@@ -236,7 +247,7 @@ export default function GameScreen() {
       {/* Round bar */}
       <div className="round-bar">
         <span className="op-label">
-          {OPS[r.op].icon} {opName(r.op)}
+          {OPS[r.op].icon}
           {r.mode === 'fixture' && <em className="derby-tag">vs {t(rival.nameKey)}</em>}
         </span>
         <div
@@ -262,10 +273,18 @@ export default function GameScreen() {
         tabIndex={skippable ? 0 : undefined}
         aria-label={skippable ? t('game.tapNext') : undefined}
       >
+        {/* The clock is tappable: adding time was keyboard-only, so on a tablet
+            the only option was removing the clock entirely — an all-or-nothing
+            choice where a graded one already existed in the code. */}
         {shootout && (
-          <div className="shot-clock" aria-hidden="true" data-urgency={urgency}>
+          <button
+            className="shot-clock"
+            data-urgency={urgency}
+            onClick={e => { e.stopPropagation(); if (!extendedRef.current) { extendedRef.current = true; extend(r.timerMs) } }}
+            aria-label={t('game.addTime')}
+          >
             <div className="shot-clock-fill" ref={barRef} />
-          </div>
+          </button>
         )}
 
         <div className="pitch-scene">
@@ -299,6 +318,19 @@ export default function GameScreen() {
         {question.prompt}
       </div>
 
+      {/* Reserved height so the answer buttons never shift when a hint appears.
+          Costs ~96px on every kick; a tap target that moves mid-question is
+          worse for everyone, and much worse with poor motor inhibition. */}
+      <div className="hint-slot">
+        {r.hint
+          ? <HintCard hint={r.hint} diagnosis={phase === 'reveal' ? r.diagnosis : null} />
+          : phase === 'asking' && (
+              <button className="link-btn" onClick={() => dispatch({ type: 'SHOW_HINT' })}>
+                {t('game.showTrick')}
+              </button>
+            )}
+      </div>
+
       {/* Answers */}
       <div className="answers" data-count={question.opts.length}>
         {question.opts.map((opt, i) => (
@@ -308,25 +340,23 @@ export default function GameScreen() {
             onClick={() => handleTap(opt)}
             disabled={!accepting || r.disabled.includes(opt)}
           >
-            <span className="ans-key" aria-hidden="true">{i + 1}</span>
+            {keyboardSeen && <span className="ans-key" aria-hidden="true">{i + 1}</span>}
             {opt}
           </button>
         ))}
       </div>
 
-      {/* Hint — appears on a parry, or on request */}
-      {r.hint && <HintCard hint={r.hint} diagnosis={r.diagnosis} />}
-
-      {phase === 'asking' && !r.hint && (
-        <button className="link-btn" onClick={() => dispatch({ type: 'SHOW_HINT' })}>
-          {t('game.showTrick')}
-        </button>
-      )}
-
       {/* Feedback — a live region so the outcome is announced */}
       <div className={`feedback ${feedback.type}`} role="status" aria-live="polite" aria-atomic="true">
         {feedback.text}
       </div>
+
+      <button
+        className="link-btn subtle"
+        onClick={() => { clearTimers(); dispatch({ type: 'END_ROUND' }) }}
+      >
+        {t('game.stopHere')}
+      </button>
 
       {shootout && (
         <button className="link-btn subtle" onClick={() => dispatch({ type: 'CLOCK_OFF' })}>
@@ -366,7 +396,6 @@ function buildFeedback(r) {
     if (r.flourish === 'glove')    return { type: 'goal', text: t('game.goalGlove') }
     return { type: 'goal', text: t('game.goal') }
   }
-  if (r.streak >= 3) return { type: 'streak', text: t('game.streak', { n: r.streak }) }
   return { type: '', text: '' }
 }
 

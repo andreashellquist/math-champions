@@ -431,6 +431,10 @@ body::before {
    digits for the same representational resource. Placed above the goal, and
    deliberately never red — urgency is carried by thickness and pulse. */
 .shot-clock {
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
   position: absolute;
   top: 6px; right: 14px;
   width: 42%;
@@ -907,3 +911,43 @@ body::before {
 }
 /* Now that the n/total counter is gone, the dots must say which one is now */
 .dot.current { box-shadow: 0 0 0 3px var(--gold); }
+.session-summary { color: #166b39; font-weight: 700; font-size: .92rem; margin: 4px 0 12px; }
+
+/* Reserved so the answer buttons never move when a hint appears */
+.hint-slot {
+  width: 100%;
+  max-width: 580px;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hint-slot .hint-card { margin: 0; }
+
+/* An entry point for the grid — three named cells beat 169 anonymous ones */
+.map-next { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+.map-next-label { color: #c8f0d6; font-size: .82rem; }
+.map-chip {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 2px solid var(--gold);
+  border-radius: 40px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: .9rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-variant-numeric: tabular-nums;
+}
+/* A cell you can't reliably hit is not a control — scroll rather than shrink */
+.mastery-grid { min-width: min-content; }
+.mm-cell { min-width: 26px; }
+.mastery-grid-scroll { width: 100%; max-width: 466px; overflow-x: auto; margin-bottom: 12px; }
+
+.difficulty-chips { list-style: none; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.difficulty-chips li { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #c8f0d6; font-size: .74rem; }
+.chip-pips { display: flex; gap: 3px; }
+.chip-pips i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.22); }
+.chip-pips i.on { background: var(--gold); }

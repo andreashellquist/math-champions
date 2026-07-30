@@ -119,3 +119,28 @@ describe('flush', () => {
     expect(load().n).toBe(7)
   })
 })
+
+describe('latency ring (v4)', () => {
+  it('migrates a v3 save and starts recording latencies empty', () => {
+    __resetStorage()
+    localStorage.clear()
+    localStorage.setItem('mc_state', JSON.stringify({
+      v: 3, n: 50, f: { 'a3.4': [2, 5, 1, 0] }, rivalry: { season: 2, stage: 1 },
+    }))
+    const s = load()
+    expect(s.v).toBe(4)
+    expect(s.l).toEqual([])
+    expect(s.f['a3.4']).toEqual([2, 5, 1, 0])   // mastery untouched
+    expect(s.rivalry.season).toBe(2)            // season untouched
+  })
+
+  it('clamps and bounds corrupt latency data', () => {
+    const s = sanitize({ l: ['banana', -5, 1e9, 2500, ...Array(80).fill(1200)] })
+    expect(s.l.length).toBe(30)
+    for (const v of s.l) {
+      expect(Number.isFinite(v)).toBe(true)
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(60000)
+    }
+  })
+})

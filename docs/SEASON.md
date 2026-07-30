@@ -272,7 +272,48 @@ documented anxiety cost. In priority order:
 
 ---
 
-## 10. Build order
+## 10. Hyperfocus — do NOT cap
+
+**Amended after the ADHD review. An earlier draft of this document implied a
+grind cap at 8 rounds. Do not build it.**
+
+Hyperfocus is not a bonus mode; it is the *same* attentional dysregulation seen
+from the other side. The impairment is in **shifting**, in both directions. A
+child in productive hyperfocus on maths facts is in the rarest and most valuable
+state this app will ever produce, and interrupting it externally:
+
+1. wastes the state;
+2. produces a disproportionate distress response — **the interruption causes the
+   meltdown, not the stopping**;
+3. teaches a durable lesson: *engaging deeply with this app gets me cut off.*
+
+The real costs of hyperfocus are skipped meals, the crash afterwards, and
+learning value decaying as fatigue rises. **A cap addresses none of them.**
+
+What to do instead:
+
+- **Never block, never grey out, never say "that's enough."**
+- **Make the boundary the child's, at a natural break.** From round 7, `En till`
+  and `Klar för idag` get *equal visual weight* on the ResultScreen. Equal weight
+  is the entire intervention — the previous layout nudged toward continuing, and
+  removing the nudge is enough. **Built.**
+- **Act on content, not access.** If first-attempt accuracy over the last 10
+  items falls ≥15 points below the session's own earlier baseline, switch the
+  next round to `['warmup','review','warmup']` at 3 kicks. The child keeps
+  playing and keeps succeeding; the learning value stops going negative. This is
+  the honest version of a cap — it protects the pedagogy without touching
+  autonomy.
+- **Externalise elapsed time once per ~20 minutes.** Information only, no action
+  attached, and *once*: `Du har spelat i en halvtimme. Du kan sluta när du vill
+  — eller köra vidare.` A single neutral timestamp is a kindness; a repeated one
+  is nagging.
+- **The one legitimate hard boundary is the parent's**, fires only at a round
+  boundary, and announces itself when set so the child knows the rule exists in
+  advance. Predictable limits are tolerable; surprise limits are not.
+
+---
+
+## 11. Build order
 
 1. `STATE_VERSION` 3 + `rivalry` persistence + sanitiser
 2. Tie tracking on round end (round-win = goals ≥ 4)

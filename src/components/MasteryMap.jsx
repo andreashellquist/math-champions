@@ -3,7 +3,7 @@ import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { OPS, OP_ORDER, opName } from '../game/config'
 import { STRANDS_BY_OP, factKey, answerOf } from '../game/facts'
-import { MASTERED_BOX, masteredCount, strandProgress, labelForKey } from '../game/mastery'
+import { MASTERED_BOX, masteredCount, strandProgress, labelForKey, workingOn } from '../game/mastery'
 import { getHint } from '../game/hints'
 
 /**
@@ -24,7 +24,9 @@ import { getHint } from '../game/hints'
 const GRIDS = {
   addition:       { rows: range(0, 10), cols: range(0, 10) },
   subtraction:    { rows: range(2, 18), cols: range(1, 9) },
-  multiplication: { rows: range(0, 12), cols: range(0, 12) },
+  // 2..12 rather than 0..12: the ×0 and ×1 rows were 25 of 169 cells and
+  // nobody practises them, so they diluted the whole signal.
+  multiplication: { rows: range(2, 12), cols: range(2, 12) },
   division:       { rows: range(1, 10), cols: range(1, 10) },   // divisor × quotient
 }
 
@@ -65,6 +67,23 @@ export default function MasteryMap() {
 
   const ladder = (STRANDS_BY_OP[op] ?? []).filter(s => !s.perFact)
 
+  // The three facts worth practising next, from the same data the trophy
+  // screen uses. This is what turns the map from a search task into a
+  // reading task.
+  const nextThree = useMemo(
+    () => workingOn(state.mastery, 12).filter(w => tracked.has(w.key)).slice(0, 3),
+    [state.mastery, tracked],
+  )
+
+  /** Open the sheet from a fact key rather than a grid position */
+  function openKey(key) {
+    const fact = tracked.get(key)
+    if (!fact) return
+    const ans = answerOf(fact)
+    setPicked({ key, fact, ans, box: boxes[key]?.[0] ?? 0,
+      hint: getHint({ op: fact.op, a: fact.a, b: fact.b, ans }) })
+  }
+
   function openCell(r, c) {
     const raw = cellFact(op, r, c)
     if (!raw) return
@@ -78,7 +97,18 @@ export default function MasteryMap() {
   return (
     <div className="screen">
       <h1 className="title" style={{ fontSize: '1.8rem' }}>{t('map.title')}</h1>
-      <p className="subtitle">{t('map.grown', { n: grown, total: tracked.size })}</p>
+      <p className="subtitle">{t('map.grownSimple', { n: grown })}</p>
+
+      {nextThree.length > 0 && (
+        <div className="map-next">
+          <span className="map-next-label">{t('map.nextThree')}</span>
+          {nextThree.map(w => (
+            <button key={w.key} className="map-chip" onClick={() => openKey(w.key)}>
+              {labelForKey(w.key)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="map-tabs" role="tablist">
         {OP_ORDER.map(o => (

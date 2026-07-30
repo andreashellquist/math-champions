@@ -5,6 +5,7 @@ import {
   MASTERED_BOX,
 } from './mastery'
 import { STRANDS_BY_OP, answerOf, factKey } from './facts'
+import { computeTimeLimit, TIMER_FLOOR } from '../hooks/useDeadline'
 import { makeRng } from './rng'
 
 /**
@@ -194,5 +195,44 @@ describe('division rests on multiplication', () => {
     const round = composeRound(emptyState(), 'division', { rng: makeRng(9) })
     expect(round).toHaveLength(5)
     for (const f of round) expect(f.a % f.b).toBe(0)
+  })
+})
+
+describe('latency evidence for the clock', () => {
+  const FACT2 = STRANDS_BY_OP.addition[0].facts[5]
+
+  it('records first-attempt latencies only', () => {
+    let s = applyAnswer(emptyState(), { fact: FACT2, correct: true, latencyMs: 2200 })
+    expect(s.l).toEqual([2200])
+
+    // A rebound is real learning but it is not a timed retrieval
+    s = applyAnswer(s, { fact: FACT2, correct: true, latencyMs: 3100, secondAttempt: true })
+    expect(s.l).toEqual([2200])
+
+    // Nor is a miss
+    s = applyAnswer(s, { fact: FACT2, correct: false, latencyMs: 9000 })
+    expect(s.l).toEqual([2200])
+  })
+
+  it('stays bounded however long the child plays', () => {
+    let s = emptyState()
+    for (let i = 0; i < 500; i++) {
+      s = applyAnswer(s, { fact: FACT2, correct: true, latencyMs: 1000 + i })
+    }
+    expect(s.l.length).toBeLessThanOrEqual(30)
+  })
+
+  it('produces a clock derived from the child, not from content mastery', () => {
+    const fast = Array(20).fill(1400)
+    const slow = Array(20).fill(7000)
+    const tFast = computeTimeLimit({ op: 'addition', latencies: fast })
+    const tSlow = computeTimeLimit({ op: 'addition', latencies: slow })
+    expect(tSlow).toBeGreaterThan(tFast)
+    expect(tFast).toBeGreaterThanOrEqual(TIMER_FLOOR)
+  })
+
+  it('never tightens more than 10% between sessions', () => {
+    const t = computeTimeLimit({ op: 'addition', latencies: Array(20).fill(1000), previousT: 10000 })
+    expect(t).toBeGreaterThanOrEqual(9000)
   })
 })

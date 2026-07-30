@@ -18,7 +18,7 @@ import {
 } from './facts'
 import { rng as defaultRng } from './rng'
 
-export const STATE_VERSION = 3
+export const STATE_VERSION = 4
 
 /** Items (not seconds) before a fact is due again, per box */
 const BOX_GAP = [0, 3, 8, 20, 45, 100]
@@ -33,6 +33,8 @@ export const MIN_REQUEUE_GAP = 3
 const NEW_FACT_WINDOW = 8
 /** Recent-outcome window used by the difficulty controller */
 const WINDOW = 20
+/** Capped ring buffer of recent latencies */
+const LATENCY_MEMORY = 30
 /** Capped ring buffer of error families — the only thing that could grow unbounded */
 const ERROR_MEMORY = 20
 
@@ -46,6 +48,7 @@ export function emptyState() {
     s: {},                                                  // strandId → [box, dueAt, streak, misses]
     e: [],                                                  // recent error families
     r: Object.fromEntries(OP_KEYS.map(o => [o, []])),       // recent outcomes per op
+    l: [],                                                  // recent first-attempt latencies, ms
     agg: { correct: 0, goals: 0, seen: 0, rounds: 0, bestStreak: 0 },
     rivalry: emptyRivalry(),
   }
@@ -180,6 +183,12 @@ export function applyAnswer(state, { fact, correct, latencyMs = 0, errorFamily =
     n,
     [bucketName]: { ...state[bucketName], [key]: next },
     r: { ...state.r, [fact.op]: recent },
+    // First-attempt latencies only. This is what the Shootout clock is supposed
+    // to derive from — without it the clock fell back to a static table indexed
+    // by content mastery, i.e. it tightened as a reward for getting better.
+    l: correct && !secondAttempt && latencyMs > 0
+      ? [...(state.l ?? []), Math.min(60000, Math.round(latencyMs))].slice(-LATENCY_MEMORY)
+      : (state.l ?? []),
     e: errors,
     agg: {
       ...state.agg,
@@ -276,6 +285,9 @@ function divisionReady(state, fact) {
 }
 
 const ROLE_ORDER = ['warmup', 'review', 'struggle', 'review', 'new']
+/* At size 3, `ROLE_ORDER[i % 5]` yields warmup/review/review — no new material
+   at all, which is the most boring possible three kicks. */
+const ROLE_ORDER_3 = ['warmup', 'struggle', 'new']
 
 /**
  * Pick one fact for a given role.
@@ -344,12 +356,13 @@ export function selectFact(state, op, { role, exclude = new Set(), rng: r = defa
  * Fixed shape: a warm-up, two reviews, one the child is struggling with, and
  * one new-or-stretch. No fact repeats inside a round.
  */
-export function composeRound(state, op, { size = 5, rng: r = defaultRng } = {}) {
+export function composeRound(state, op, { size = 5, ease = false, rng: r = defaultRng } = {}) {
   const chosen = []
   const used = new Set()
+  const order = ease ? ROLE_ORDER_EASE : size <= 3 ? ROLE_ORDER_3 : ROLE_ORDER
 
   for (let i = 0; i < size; i++) {
-    const role = ROLE_ORDER[i % ROLE_ORDER.length]
+    const role = order[i % order.length]
     const fact = selectFact(state, op, { role, exclude: used, rng: r })
     if (!fact) break
     used.add(fact.key)
@@ -412,6 +425,45 @@ export function composeFixture(state, op, { size = 5, rng: r = defaultRng } = {}
  */
 export function optionCountFor(box) {
   return box >= 3 ? 4 : 3
+}
+
+/**
+ * Is the child fatiguing within this session?
+ *
+ * The honest alternative to a grind cap: when accuracy drops well below the
+ * child's own earlier level, we change what the next round *contains* rather
+ * than whether they may play it. They keep succeeding and the learning value
+ * stops going negative — and nobody interrupts a hyperfocused child.
+ */
+export function isFatiguing(state, op, { drop = 0.15 } = {}) {
+  const r = state.r[op] ?? []
+  if (r.length < 20) return false
+  const early = r.slice(0, 10).reduce((a, b) => a + b, 0) / 10
+  const late = r.slice(-10).reduce((a, b) => a + b, 0) / 10
+  return early - late >= drop
+}
+
+/** A gentle round: all high-box facts, so a tiring child keeps succeeding */
+const ROLE_ORDER_EASE = ['warmup', 'review', 'warmup']
+
+/**
+ * Which operation to open on when the child just wants to start.
+ *
+ * Task initiation is a core executive-function deficit, and asking a child to
+ * *choose* before they have any momentum is where sessions die — not mid-round,
+ * at the menu. So this picks for them: the unlocked operation with the most
+ * facts currently due.
+ */
+export function suggestOp(state, ops, fallback = 'addition') {
+  let best = null
+  for (const op of ops) {
+    const due = openStrands(state, op)
+      .flatMap(s => (s.perFact ? s.facts : []))
+      .filter(f => isSeen(state, f) && recordFor(state, f)[1] <= state.n)
+      .length
+    if (!best || due > best.due) best = { op, due }
+  }
+  return best?.op ?? fallback
 }
 
 /* ── DERIVED STATS (for the trophy / parent view) ──────────── */

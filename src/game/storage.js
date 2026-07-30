@@ -111,6 +111,7 @@ export function sanitize(raw) {
       rounds:     int(raw.agg?.rounds, 0, 1e9),
       bestStreak: int(raw.agg?.bestStreak, 0, 9999),
     },
+    l: Array.isArray(raw.l) ? raw.l.map(x => int(x, 0, 60000)).slice(-30) : [],
     rivalry: cleanRivalry(raw.rivalry),
   }
 }
@@ -164,6 +165,9 @@ const MIGRATIONS = {
   // v3 adds the season. Mastery is untouched — a child mid-ladder keeps every
   // fact and simply starts the first competition.
   2: prev => ({ ...prev, v: 3, rivalry: emptyRivalry() }),
+  // v4 starts recording first-attempt latencies. Empty is correct: the clock
+  // falls back to the generous defaults until there is real evidence.
+  3: prev => ({ ...prev, v: 4, l: [] }),
 }
 
 /* ── PUBLIC API ────────────────────────────────────────────── */

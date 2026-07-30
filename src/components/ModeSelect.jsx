@@ -1,7 +1,8 @@
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { OPS, OP_ORDER, opName } from '../game/config'
-import { recentAccuracy, masteredCount, opProgress } from '../game/mastery'
+import { recentAccuracy, opProgress, MASTERED_BOX } from '../game/mastery'
+import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
 
 /**
@@ -13,7 +14,13 @@ import { computeTimeLimit } from '../hooks/useDeadline'
 function shootoutOffered(mastery, op) {
   const acc = recentAccuracy(mastery, op)
   const attempts = (mastery.r[op] ?? []).length
-  return acc !== null && acc >= 0.85 && attempts >= 20 && masteredCount(mastery) >= 8
+  // Per-operation, not global: `masteredCount` counts facts from any operation,
+  // so eight solid addition facts were unlocking the division Shootout.
+  const solidInOp = (STRANDS_BY_OP[op] ?? [])
+    .flatMap(st => st.facts)
+    .filter(f => (mastery.f[f.key]?.[0] ?? 0) >= MASTERED_BOX)
+    .length
+  return acc !== null && acc >= 0.85 && attempts >= 20 && solidInOp >= 8
 }
 
 export default function ModeSelect() {
@@ -26,11 +33,10 @@ export default function ModeSelect() {
 
   const play = (op, mode) => {
     const timerMs = mode === 'shootout'
-      ? computeTimeLimit({
-          op,
-          level: Math.floor(opProgress(mastery, op) * 3),
-          extraTime: state.settings.extraTime,
-        })
+      // `level` is deliberately gone: deriving the limit from content mastery
+      // meant the clock tightened as the child improved, which is exactly the
+      // "you are slow" signal the design exists to avoid.
+      ? computeTimeLimit({ op, latencies: mastery.l, extraTime: state.settings.extraTime })
       : null
     startRound(op, { mode, timerMs })
   }
@@ -81,6 +87,21 @@ export default function ModeSelect() {
             {t('fixture.label')} — {t(rival.nameKey)}
           </button>
           <p className="hint-note">{t('fixture.note', { rival: t(rival.nameKey) })}</p>
+          {/* Transparent difficulty is motivating; opaque difficulty is not. */}
+          <ul className="difficulty-chips" aria-label={t('fixture.difficulty')}>
+            {[
+              { key: 'questions', pips: 3 },
+              { key: 'options', pips: 2 },
+              { key: 'length', pips: 1 },
+            ].map(({ key, pips }) => (
+              <li key={key}>
+                <span>{t(`fixture.chip.${key}`)}</span>
+                <span className="chip-pips" aria-hidden="true">
+                  {[1, 2, 3].map(i => <i key={i} className={i <= pips ? 'on' : ''} />)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </>
       )}
 
