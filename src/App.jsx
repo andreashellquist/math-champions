@@ -29,16 +29,21 @@ function Shell() {
   useEffect(installAudioUnlock, [])
   useEffect(() => { setSoundEnabled(state.settings.sound) }, [state.settings.sound])
 
+  /* Hold an unlock until the child is between rounds. Good news landing over a
+     live question is still an interruption, and an assertive live region cuts
+     across a screen reader mid-problem. */
+  const showToast = state.toast && state.screen !== 'game'
+
   useEffect(() => {
-    if (!state.toast) return
+    if (!showToast) return
     const id = setTimeout(() => dispatch({ type: 'HIDE_TOAST' }), 3400)
     return () => clearTimeout(id)
-  }, [state.toast, dispatch])
+  }, [showToast, dispatch])
 
   return (
     <>
       <Screen />
-      <UnlockToast message={state.toast} />
+      <UnlockToast message={showToast ? state.toast : null} />
     </>
   )
 }

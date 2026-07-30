@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  emptyState, applyAnswer, composeRound, openStrands, boxOf,
-  masteredCount, recentAccuracy, optionCountFor, workingOn, labelForKey,
-  MASTERED_BOX,
+  emptyState, applyAnswer, composeRound, composeMixed, mixedReady, isFatiguing,
+  openStrands, boxOf, masteredCount, recentAccuracy, optionCountFor, workingOn,
+  labelForKey, MASTERED_BOX, OP_KEYS,
 } from './mastery'
 import { STRANDS_BY_OP, answerOf, factKey } from './facts'
 import { computeTimeLimit, TIMER_FLOOR } from '../hooks/useDeadline'
@@ -234,5 +234,64 @@ describe('latency evidence for the clock', () => {
   it('never tightens more than 10% between sessions', () => {
     const t = computeTimeLimit({ op: 'addition', latencies: Array(20).fill(1000), previousT: 10000 })
     expect(t).toBeGreaterThanOrEqual(9000)
+  })
+})
+
+describe('interleaved mixed rounds', () => {
+  /** Bring several operations up to a solid standard */
+  function solidIn(ops) {
+    let state = emptyState()
+    for (const op of ops) {
+      for (const f of STRANDS_BY_OP[op].flatMap(s => s.facts).slice(0, 12)) {
+        for (let i = 0; i < 3; i++) {
+          state = applyAnswer(state, { fact: f, correct: true, latencyMs: 1000 })
+        }
+      }
+    }
+    return state
+  }
+
+  it('is withheld until two operations are actually solid', () => {
+    expect(mixedReady(emptyState(), OP_KEYS)).toBeNull()
+    expect(mixedReady(solidIn(['addition']), OP_KEYS)).toBeNull()
+    expect(mixedReady(solidIn(['addition', 'subtraction']), OP_KEYS)).toHaveLength(2)
+  })
+
+  it('draws from more than one operation', () => {
+    const state = solidIn(['addition', 'subtraction'])
+    const ops = mixedReady(state, OP_KEYS)
+    const round = composeMixed(state, ops, { rng: makeRng(4) })
+    expect(round.length).toBeGreaterThan(1)
+    expect(new Set(round.map(f => f.op)).size).toBeGreaterThan(1)
+  })
+
+  it('never repeats a fact inside a mixed round', () => {
+    const state = solidIn(['addition', 'subtraction', 'multiplication'])
+    const ops = mixedReady(state, OP_KEYS)
+    for (let seed = 0; seed < 20; seed++) {
+      const round = composeMixed(state, ops, { rng: makeRng(seed) })
+      expect(new Set(round.map(f => f.key)).size).toBe(round.length)
+    }
+  })
+})
+
+describe('fatigue degrades content, never access', () => {
+  it('detects a real drop within a session', () => {
+    const s = emptyState()
+    // strong first half, weak second half
+    s.r.addition = [...Array(10).fill(1), ...Array(10).fill(0)]
+    expect(isFatiguing(s, 'addition')).toBe(true)
+  })
+
+  it('does not fire on a steady session', () => {
+    const s = emptyState()
+    s.r.addition = Array(20).fill(1)
+    expect(isFatiguing(s, 'addition')).toBe(false)
+  })
+
+  it('needs enough data before judging', () => {
+    const s = emptyState()
+    s.r.addition = [1, 1, 0, 0]
+    expect(isFatiguing(s, 'addition')).toBe(false)
   })
 })

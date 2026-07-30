@@ -46,6 +46,7 @@ export default function MasteryMap() {
   const { t } = useTranslation()
   const [op, setOp] = useState(state.selectedOp ?? 'addition')
   const [picked, setPicked] = useState(null)
+  const [cursor, setCursor] = useState(0)
 
   const tracked = useMemo(() => {
     const set = new Map()
@@ -82,6 +83,19 @@ export default function MasteryMap() {
     const ans = answerOf(fact)
     setPicked({ key, fact, ans, box: boxes[key]?.[0] ?? 0,
       hint: getHint({ op: fact.op, a: fact.a, b: fact.b, ans }) })
+  }
+
+  /** Arrow-key navigation with a roving tabindex — a 169-cell grid is
+      otherwise unreachable without a pointer. */
+  function onGridKey(e) {
+    const cols = grid.cols.length
+    const total = cols * grid.rows.length
+    const delta = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key]
+    if (delta === undefined) return
+    e.preventDefault()
+    const next = Math.max(0, Math.min(total - 1, cursor + delta))
+    setCursor(next)
+    e.currentTarget.querySelector(`[data-idx="${next}"]`)?.focus()
   }
 
   function openCell(r, c) {
@@ -124,13 +138,16 @@ export default function MasteryMap() {
         ))}
       </div>
 
+      <div className="mastery-grid-scroll">
       <div
         className="mastery-grid"
         role="grid"
         aria-label={t('map.gridLabel', { op: opName(op) })}
         style={{ '--cols': grid.cols.length, aspectRatio: `${grid.cols.length} / ${grid.rows.length}` }}
+        onKeyDown={onGridKey}
       >
-        {grid.rows.map(r => grid.cols.map(c => {
+        {grid.rows.flatMap((r, ri) => grid.cols.map((c, ci) => {
+          const idx = ri * grid.cols.length + ci
           const raw = cellFact(op, r, c)
           const key = raw && factKey(op, raw.a, raw.b)
           const known = key && tracked.has(key)
@@ -144,7 +161,9 @@ export default function MasteryMap() {
               className={`mm-cell${known ? '' : ' off'}${seen ? ' seen' : ''}`}
               data-box={seen ? box : undefined}
               disabled={!known}
-              tabIndex={-1}
+              tabIndex={idx === cursor ? 0 : -1}
+              data-idx={idx}
+              onFocus={() => setCursor(idx)}
               aria-label={known
                 ? t('map.cellLabel', { fact: labelForKey(key), box: seen ? box : 0 })
                 : undefined}
@@ -152,6 +171,7 @@ export default function MasteryMap() {
             />
           )
         }))}
+      </div>
       </div>
 
       <ul className="map-key" aria-hidden="true">

@@ -1,6 +1,6 @@
 # Season structure — design
 
-Status: **designed, not built.** This document is the plan to review before any
+Status: **largely built.** Section 11 tracks what remains. This document is the plan to review before any
 code lands. Everything here follows from two constraints agreed with the
 pedagogy lead, which override any other consideration below:
 
@@ -315,11 +315,21 @@ What to do instead:
 
 ## 11. Build order
 
-1. `STATE_VERSION` 3 + `rivalry` persistence + sanitiser
-2. Tie tracking on round end (round-win = goals ≥ 4)
-3. `SeasonScreen` + menu strip
-4. Derby round order, forced 4 options, difficulty pips
-5. Weekly delta card
-6. Format escalation ladder (free numeric entry is the big one)
-7. Uttagningen gates
-8. Sudden death, flourish bias, capped clock scaling
+- [x] `STATE_VERSION` 3 + `rivalry` persistence + sanitiser
+- [x] Tie tracking on round end (round-win = goals ≥ 4)
+- [x] `SeasonScreen` + menu strip
+- [x] Derby: rival picks the questions, forced 4 options, difficulty pips
+- [x] Weekly delta card
+- [x] Format escalation: 4 options, missing operand, word problems, free numeric
+      entry, interleaved mixed rounds
+- [x] Fatigue degrades content rather than access (`isFatiguing`)
+- [x] `STATE_VERSION` 4 — first-attempt latency ring, so the Shootout clock
+      derives from the child rather than from content mastery
+- [ ] **Uttagningen gates** — the last substantial piece. Certify, never block;
+      untimed; only offered at ≥85% predicted pass; failure reported as
+      diagnosis with the missed facts queued first.
+- [ ] Sudden death on a 5/5 Shootout (`suddenDeath` flag exists, nothing sets it)
+- [ ] Flourish bias per rival, capped `clockScale ≥ 0.8` and never applied when
+      `extraTime > 1`
+- [ ] Box-level names (`Provspel → Kapten`) so a demotion reads without shame
+- [ ] Parent view behind `?parent=1` — the metrics are already tracked

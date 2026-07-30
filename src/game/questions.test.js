@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildQuestion } from './questions'
+import { buildQuestion, pickFormat } from './questions'
 import { pickDistractors, classifyChoice } from './distractors'
 import { ALL_FACTS, STRANDS, sampleStrandFact, answerOf, factKey } from './facts'
 import { makeRng } from './rng'
@@ -231,5 +231,41 @@ describe('distractors encode real misconceptions', () => {
       }).forEach(d => withHistory.add(d.family))
     }
     expect(withHistory.has('buggy_algorithm')).toBe(true)
+  })
+})
+
+describe('free numeric entry', () => {
+  const r = makeRng(2026)
+  const fact = ALL_FACTS.find(f => f.key === factKey('multiplication', 7, 8))
+
+  it('is offered only once a fact is solid', () => {
+    // No scaffold to fall back on, so it must not arrive early
+    for (const box of [0, 1, 2, 3]) {
+      for (let i = 0; i < 60; i++) {
+        expect(pickFormat(box, { allowEntry: true, rng: r })).not.toBe('entry')
+      }
+    }
+  })
+
+  it('never appears unless the operation as a whole is solid', () => {
+    for (let i = 0; i < 200; i++) {
+      expect(pickFormat(5, { allowEntry: false, rng: r })).not.toBe('entry')
+    }
+  })
+
+  it('does appear at a high box once allowed', () => {
+    const seen = new Set()
+    for (let i = 0; i < 200; i++) seen.add(pickFormat(5, { allowEntry: true, rng: r }))
+    expect(seen.has('entry')).toBe(true)
+  })
+
+  it('offers no options to choose between', () => {
+    const q = buildQuestion({ fact, format: 'entry', rng: r })
+    expect(q.opts).toEqual([])
+    expect(q.distractors).toEqual([])
+    expect(q.ans).toBe(56)
+    expect(q.prompt).toMatch(/= \?$/)
+    // The hint still describes the underlying fact
+    expect(q.hintFact).toEqual({ op: 'multiplication', a: 7, b: 8, ans: 56 })
   })
 })

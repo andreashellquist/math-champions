@@ -132,6 +132,15 @@ export function buildQuestion({
     distractorFact = { op, a, b, ans: result }
   }
 
+  // Free entry has no options to choose between
+  if (format === 'entry') {
+    return {
+      factKey: fact.key, strand: fact.strand, op, a, b, ans,
+      format, prompt, distractors: [], opts: [],
+      hintFact: { op, a, b, ans: result },
+    }
+  }
+
   const distractors = pickDistractors({
     ...distractorFact,
     count: optionCount - 1,
@@ -159,7 +168,11 @@ export function buildQuestion({
  * Missing-operand only once the fact itself is solid (box ≥ 3), capped so
  * it stays a variation rather than the norm.
  */
-export function pickFormat(box, { allowWord = true, rng: r = defaultRng } = {}) {
+export function pickFormat(box, { allowWord = true, allowEntry = false, rng: r = defaultRng } = {}) {
+  // Free entry is production, not recognition — the only format that certifies
+  // a fact is actually recalled. Gated on the fact being solid, because there
+  // is no scaffold to fall back on.
+  if (allowEntry && box >= 4 && r.chance(0.35)) return 'entry'
   if (box >= 3 && r.chance(0.25)) return 'missing'
   if (allowWord && r.chance(0.2)) return 'word'
   return 'standard'

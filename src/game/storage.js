@@ -250,6 +250,40 @@ export function saveSettings(settings) {
   } catch { /* non-fatal */ }
 }
 
+/* ── WEEKLY SNAPSHOT ───────────────────────────────────────────
+   Separate from progress so a reset doesn't wipe it and vice versa. Holds one
+   number and one week id — deliberately not a history, because a history is a
+   streak waiting to be built, and a breakable streak is a loss-aversion device.
+   ─────────────────────────────────────────────────────────── */
+
+const WEEK_KEY = 'mc_week'
+
+/** ISO-ish week id. Monday-based, which is what a Swedish school week is. */
+export function weekId(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const day = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - day)
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(((d - start) / 86400000 + 1) / 7)
+  return `${d.getUTCFullYear()}-w${week}`
+}
+
+export function loadWeek() {
+  try {
+    const raw = store().getItem(WEEK_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw)
+    if (typeof p?.id !== 'string') return null
+    return { id: p.id, mastered: int(p.mastered, 0, 1e6), shown: p.shown === true }
+  } catch {
+    return null
+  }
+}
+
+export function saveWeek(week) {
+  try { store().setItem(WEEK_KEY, JSON.stringify(week)) } catch { /* non-fatal */ }
+}
+
 /** Test seam — resets the memoised backing store */
 export function __resetStorage() {
   backing = null

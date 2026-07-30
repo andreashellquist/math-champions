@@ -41,6 +41,8 @@ export default {
     progress: '{pct}% av vägen',
     opensAt: 'Öppnas vid {n} rätt',
     tryAnyway: 'Testa ändå →',
+    mixed: '🎲 Blandat',
+    mixedNote: 'Blandat är svårare med flit — allt kommer huller om buller. Det är precis därför det fastnar bättre.',
     shootout: '⏱️ Straffläggning',
     shootoutNote: '⏱️ Straffläggning: domaren tar tiden. Samma matte, mer drama. Har du rätt gör du mål — varje gång.',
   },
@@ -52,6 +54,7 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    entryNote: 'Nu skriver du svaret själv. Det känns svårare — det är meningen. Så fastnar det.',
     addTime: 'Mer tid',
     tapNext: 'Tryck för nästa →',
     stopHere: '👋 Klar för nu',
@@ -194,6 +197,13 @@ export default {
     },
     tieWon: '🏆 Du tog mötet mot {rival}!',
     seasonWon: '🏆🏆 Säsong {n} avklarad! Alla fyra turneringar vunna.',
+  },
+
+  week: {
+    title: 'Den här veckan',
+    gained: '{n} nya tal sitter automatiskt nu.',
+    thin: 'Alla veckor ser olika ut. Vi kör vidare.',
+    ok: 'Kör!',
   },
 
   unlock: '🔓 {icon} {name} upplåst!',

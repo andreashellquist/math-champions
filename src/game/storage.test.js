@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { load, save, flush, clear, sanitize, __resetStorage } from './storage'
+import {
+  load, save, flush, clear, sanitize, __resetStorage,
+  weekId, loadWeek, saveWeek,
+} from './storage'
 import { emptyState } from './mastery'
 
 beforeEach(() => {
@@ -142,5 +145,37 @@ describe('latency ring (v4)', () => {
       expect(v).toBeGreaterThanOrEqual(0)
       expect(v).toBeLessThanOrEqual(60000)
     }
+  })
+})
+
+describe('weekly snapshot', () => {
+  it('computes a Monday-based week id', () => {
+    // Swedish school weeks start Monday
+    const mon = weekId(new Date('2026-07-27T09:00:00Z'))
+    const sun = weekId(new Date('2026-08-02T09:00:00Z'))
+    const nextMon = weekId(new Date('2026-08-03T09:00:00Z'))
+    expect(mon).toBe(sun)          // same week
+    expect(nextMon).not.toBe(mon)  // new week
+  })
+
+  it('round-trips and clamps', () => {
+    saveWeek({ id: '2026-w30', mastered: 12, shown: false })
+    expect(loadWeek()).toEqual({ id: '2026-w30', mastered: 12, shown: false })
+
+    saveWeek({ id: '2026-w30', mastered: -5, shown: true })
+    expect(loadWeek().mastered).toBe(0)
+  })
+
+  it('returns null rather than throwing on garbage', () => {
+    localStorage.setItem('mc_week', '{broken')
+    expect(loadWeek()).toBeNull()
+    localStorage.setItem('mc_week', JSON.stringify({ nope: 1 }))
+    expect(loadWeek()).toBeNull()
+  })
+
+  it('is not a history, so it cannot become a breakable streak', () => {
+    saveWeek({ id: '2026-w30', mastered: 12, shown: true })
+    const w = loadWeek()
+    expect(Object.keys(w).sort()).toEqual(['id', 'mastered', 'shown'])
   })
 })

@@ -428,6 +428,38 @@ export function optionCountFor(box) {
 }
 
 /**
+ * A mixed round drawn across every unlocked operation.
+ *
+ * Interleaving lowers accuracy *within* a session and raises retention, which
+ * is why the UI says so out loud — a child who isn't told will read the dip as
+ * getting worse.
+ */
+export function composeMixed(state, ops, { size = 5, rng: r = defaultRng } = {}) {
+  const chosen = []
+  const used = new Set()
+  const pool = r.shuffle(ops)
+
+  for (let i = 0; i < size; i++) {
+    const op = pool[i % pool.length]
+    const role = i === 0 ? 'warmup' : i % 2 ? 'review' : 'struggle'
+    const fact = selectFact(state, op, { role, exclude: used, rng: r })
+    if (!fact) continue
+    used.add(fact.key)
+    chosen.push({ ...fact, role: 'mixed' })
+  }
+  return chosen
+}
+
+/** Interleaving is only meaningful once two operations are actually solid */
+export function mixedReady(state, ops) {
+  const solid = ops.filter(op => {
+    const acc = recentAccuracy(state, op)
+    return acc !== null && acc >= 0.8 && (state.r[op] ?? []).length >= 20
+  })
+  return solid.length >= 2 ? solid : null
+}
+
+/**
  * Is the child fatiguing within this session?
  *
  * The honest alternative to a grind cap: when accuracy drops well below the

@@ -46,6 +46,7 @@ export default function GameScreen() {
   const [urgency, setUrgency] = useState(0)
   const [line, setLine] = useState(null)
   const [keyboardSeen, setKeyboardSeen] = useState(false)
+  const [typed, setTyped] = useState('')
   const questionRef = useRef(null)
   const skipArmedAt = useRef(null)
   const extendedRef = useRef(false)
@@ -90,7 +91,7 @@ export default function GameScreen() {
     else if (frac <= 0.4 && urgency < 1) { setUrgency(1); sfx.urgent1() }
   }, [secondsLeft, shootout, r?.timerMs, urgency])
 
-  useEffect(() => { setUrgency(0); extendedRef.current = false }, [r?.kickIdx])
+  useEffect(() => { setUrgency(0); extendedRef.current = false; setTyped('') }, [r?.kickIdx])
 
   /* The rival greets at kick-off and applauds a goal — and says nothing at all
      when the child misses. See game/banter.js. */
@@ -331,7 +332,31 @@ export default function GameScreen() {
             )}
       </div>
 
-      {/* Answers */}
+      {question.format === 'entry' ? (
+        <div className="entry">
+          <div className="entry-display" aria-live="polite">{typed || '·'}</div>
+          <div className="keypad">
+            {[1,2,3,4,5,6,7,8,9,0].map(d => (
+              <button
+                key={d}
+                className="key"
+                disabled={!accepting}
+                onClick={() => setTyped(v => (v + d).slice(0, 3))}
+              >{d}</button>
+            ))}
+            <button className="key key-wide" disabled={!accepting} onClick={() => setTyped('')}>
+              ⌫
+            </button>
+            <button
+              className="key key-go"
+              disabled={!accepting || !typed}
+              onClick={() => { sfx.click(); answer(Number(typed)) }}
+            >
+              ⚽
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="answers" data-count={question.opts.length}>
         {question.opts.map((opt, i) => (
           <button
@@ -345,6 +370,13 @@ export default function GameScreen() {
           </button>
         ))}
       </div>
+      )}
+
+      {/* Free entry feels harder, and a child who isn't told why reads that as
+          going backwards. Say it before they conclude it. */}
+      {question.format === 'entry' && phase === 'asking' && (
+        <p className="entry-note">{t('game.entryNote')}</p>
+      )}
 
       {/* Feedback — a live region so the outcome is announced */}
       <div className={`feedback ${feedback.type}`} role="status" aria-live="polite" aria-atomic="true">

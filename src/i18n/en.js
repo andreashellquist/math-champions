@@ -33,6 +33,8 @@ export default {
     progress: '{pct}% of the way through',
     opensAt: 'Opens at {n} correct',
     tryAnyway: 'Try it anyway →',
+    mixed: '🎲 Mixed',
+    mixedNote: 'Mixed is meant to be harder — everything comes at once. That is exactly why it sticks better.',
     shootout: '⏱️ Shootout',
     shootoutNote: '⏱️ Shootout: the ref is timing you. Same maths, more drama. Get it right and you score — every single time.',
   },
@@ -44,6 +46,7 @@ export default {
 
   game: {
     kickOf: '{n}/{total}',
+    entryNote: "Now you type the answer yourself. It feels harder — that's the point. That's how it sticks.",
     addTime: 'More time',
     tapNext: 'Tap for next →',
     stopHere: '👋 Done for now',
@@ -186,6 +189,13 @@ export default {
     },
     tieWon: '🏆 You took the tie against {rival}!',
     seasonWon: '🏆🏆 Season {n} complete! All four competitions won.',
+  },
+
+  week: {
+    title: 'This week',
+    gained: '{n} new facts are automatic now.',
+    thin: 'Every week looks different. Let\u2019s carry on.',
+    ok: "Let's go!",
   },
 
   unlock: '🔓 {icon} {name} unlocked!',

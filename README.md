@@ -146,6 +146,29 @@ deuteranopia) *and* each cell fills from the bottom in proportion to its box,
 so the level reads in pure greyscale. The accessibility fix and the
 grass-growing metaphor are the same thing.
 
+## Attention and executive function
+
+Attention span is treated as a first-order constraint, not an edge case — and
+`.claude/agents/adhd-expert.md` defines a standing reviewer with authority to
+push back on shipped code.
+
+The biggest thing that changed: **~14% of every session was time the child could
+not act.** Fixed beats held for 1.9s per kick while the informational feedback
+was already at 0ms — the button turns green instantly, so everything after that
+was reward theatre rather than information. Beats are roughly halved, and a tap
+on the pitch skips ahead entirely, which turns dead time into self-pacing.
+
+Also: one-tap start (a Play button that opens another menu trains a child to
+expect friction), 3-kick rounds so the entry price is low, a visible way out of
+a round, the reveal no longer holds a frustrated child in place when it can't
+requeue anything, and a 250ms lockout so a fast re-tap doesn't burn the second
+attempt.
+
+**Hyperfocus is not capped.** Interrupting it is what causes the meltdown, and a
+cap teaches that engaging deeply gets you cut off. Instead fatigue degrades what
+the next round *contains*, and `one more` / `done for today` get equal weight
+after a long sitting.
+
 ## Accessibility
 
 Keyboard `1`/`2`/`3` answers, `Escape` menu, `Space` extends the Shootout clock.
@@ -162,7 +185,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-116 tests. The valuable ones are property-based: every hint is checked for
+169 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to

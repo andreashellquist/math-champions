@@ -4,7 +4,11 @@
  * Kept out of the reducer because question generation is random, and a
  * reducer that isn't pure can't be tested or replayed.
  */
-import { composeRound, composeFixture, boxOf, optionCountFor, isFatiguing } from './mastery'
+import {
+  composeRound, composeFixture, composeMixed, mixedReady,
+  boxOf, optionCountFor, isFatiguing, recentAccuracy, masteredCount,
+} from './mastery'
+import { OP_ORDER } from './config'
 import { buildQuestion, pickFormat } from './questions'
 import { rng as defaultRng } from './rng'
 
@@ -14,6 +18,10 @@ export const ROUND_SIZE = 5
 export function buildRoundQueue(mastery, op, { size = ROUND_SIZE, mode = 'training', rng = defaultRng } = {}) {
   // In a fixture the rival picks the questions — see composeFixture
   if (mode === 'fixture') return composeFixture(mastery, op, { size, rng })
+  if (mode === 'mixed') {
+    const ops = mixedReady(mastery, OP_ORDER) ?? [op]
+    return composeMixed(mastery, ops, { size, rng })
+  }
   // A tiring child gets an easier round, never a locked door
   const ease = isFatiguing(mastery, op)
   return composeRound(mastery, op, { size: ease ? 3 : size, ease, rng })
@@ -28,9 +36,11 @@ export function buildRoundQueue(mastery, op, { size = ROUND_SIZE, mode = 'traini
  */
 export function questionFor(mastery, fact, { mode = 'training', rng = defaultRng } = {}) {
   const box = boxOf(mastery, fact)
+  const acc = recentAccuracy(mastery, fact.op)
+  const allowEntry = acc !== null && acc >= 0.85 && masteredCount(mastery) >= 20
   return buildQuestion({
     fact,
-    format: pickFormat(box, { rng }),
+    format: pickFormat(box, { allowEntry, rng }),
     optionCount: mode === 'fixture' ? 4 : optionCountFor(box),
     recentErrorFamilies: mastery.e,
     rng,

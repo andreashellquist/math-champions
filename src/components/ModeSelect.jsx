@@ -1,7 +1,7 @@
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { OPS, OP_ORDER, opName } from '../game/config'
-import { recentAccuracy, opProgress, MASTERED_BOX } from '../game/mastery'
+import { recentAccuracy, opProgress, MASTERED_BOX, mixedReady } from '../game/mastery'
 import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
 
@@ -30,6 +30,7 @@ export default function ModeSelect() {
 
   // The rival draws from facts the child has actually met
   const derbyReady = (mastery.r[state.selectedOp] ?? []).length >= 10
+  const mixedOps = mixedReady(mastery, OP_ORDER)
 
   const play = (op, mode) => {
     const timerMs = mode === 'shootout'
@@ -102,6 +103,16 @@ export default function ModeSelect() {
               </li>
             ))}
           </ul>
+        </>
+      )}
+
+      {mixedOps && (
+        <>
+          <button className="btn btn-white" onClick={() => play(state.selectedOp, 'mixed')}>
+            {t('mode.mixed')}
+          </button>
+          {/* Say the dip out loud, or the child reads it as getting worse */}
+          <p className="hint-note">{t('mode.mixedNote')}</p>
         </>
       )}
 

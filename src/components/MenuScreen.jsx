@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { getCharacter } from '../game/characters'
@@ -7,6 +8,7 @@ import { currentCompetition, tieWins, TIE_TARGET } from '../game/mastery'
 import { getRival } from '../game/rivals'
 import { OP_ORDER } from '../game/config'
 import Player from './Player'
+import WeeklyCard from './WeeklyCard'
 
 /** Colour ramp shared with the mastery map — monotonic in lightness */
 const BAND_COLORS = ['#2c6b45', '#3f8f56', '#57b06a', '#8ccf78', '#c7e88a', '#ffe234']
@@ -15,6 +17,7 @@ const TOTAL_FACTS = OP_ORDER.reduce(
   (n, op) => n + (STRANDS_BY_OP[op] ?? []).reduce((m, s) => m + s.facts.length, 0), 0)
 
 export default function MenuScreen() {
+  const [weekDone, setWeekDone] = useState(false)
   const { state, dispatch, keeperId, quickStart } = useGame()
   const { t } = useTranslation()
   const { agg } = state.mastery
@@ -31,6 +34,7 @@ export default function MenuScreen() {
 
   return (
     <div className="screen">
+      {!weekDone && <WeeklyCard onClose={() => setWeekDone(true)} />}
       <h1 className="title">{t('menu.title')}</h1>
       <p className="subtitle">{t('menu.subtitle')}</p>
 
