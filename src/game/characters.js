@@ -133,6 +133,60 @@ export const CHARACTERS = {
     },
     gk: { ...GK_DEFAULT, shirt: '#B9F73E', socks: '#B9F73E' },
   },
+
+  elanga: {
+    id: 'elanga', name: 'Anthony Elanga', short: 'Elanga', flag: '🇸🇪',
+    hair: 'crop', hairColor: '#1A1310', skin: '#7A4A2A',
+    number: 11, celebration: 'point', breathe: 3.2,
+    kits: {
+      home:   { shirt: '#1A1A1A', accent: '#FFFFFF', pattern: 'stripes',
+                shorts: '#1A1A1A', socks: '#1A1A1A', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: GK_DEFAULT,
+  },
+
+  bergvall: {
+    id: 'bergvall', name: 'Lucas Bergvall', short: 'Bergvall', flag: '🇸🇪',
+    hair: 'buzz', hairColor: '#D9B450', skin: '#F6D9BE',
+    number: 27, celebration: 'zen', breathe: 3.0,
+    kits: {
+      home:   { shirt: '#FFFFFF', accent: '#132257', pattern: 'solid',
+                shorts: '#132257', socks: '#FFFFFF', trim: '#132257', numberColor: '#132257' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: GK_DEFAULT,
+  },
+
+  ayari: {
+    id: 'ayari', name: 'Yasin Ayari', short: 'Ayari', flag: '🇸🇪',
+    hair: 'curls', hairColor: '#241A14', skin: '#B57A4E',
+    number: 34, celebration: 'roar', breathe: 3.3,
+    kits: {
+      home:   { shirt: '#0057B8', accent: '#FFFFFF', pattern: 'stripes',
+                shorts: '#FFFFFF', socks: '#0057B8', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: GK_DEFAULT,
+  },
+
+  foden: {
+    id: 'foden', name: 'Phil Foden', short: 'Foden', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    hair: 'flow', hairColor: '#B8934A', skin: '#F4D3B4',
+    number: 47, celebration: 'arms-wide', breathe: 3.4,
+    kits: {
+      // Same club colours as Haaland — real squad-mates share a kit, which
+      // is why identity here rides on hair, skin, number and name, not palette.
+      home:   { shirt: '#9BCFF2', accent: '#1C2C5B', pattern: 'solid',
+                shorts: '#FFFFFF', socks: '#9BCFF2', trim: '#1C2C5B', numberColor: '#1C2C5B' },
+      nation: { shirt: '#E31B23', accent: '#FFFFFF', pattern: 'solid',
+                shorts: '#FFFFFF', socks: '#E31B23', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+    },
+    gk: GK_DEFAULT,
+  },
 }
 
 export const ROSTER = Object.values(CHARACTERS)
