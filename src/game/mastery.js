@@ -18,7 +18,7 @@ import {
 } from './facts'
 import { rng as defaultRng } from './rng'
 
-export const STATE_VERSION = 5
+export const STATE_VERSION = 6
 
 /** Items (not seconds) before a fact is due again, per box */
 const BOX_GAP = [0, 3, 8, 20, 45, 100]
@@ -65,6 +65,7 @@ export function emptyState() {
     agg: { correct: 0, goals: 0, seen: 0, rounds: 0, bestStreak: 0 },
     rivalry: emptyRivalry(),
     gates: emptyGates(),
+    arcade: emptyArcade(),
   }
 }
 
@@ -252,6 +253,61 @@ export function applyGateResult(state, { gateId, score, missedKeys = [], at = Da
 
 export const gatePassed = (state, gateId) => state.gates?.[gateId]?.passed === true
 export const gatesPassed = state => Object.values(state.gates ?? {}).filter(g => g.passed).length
+
+/* ── SNABBSKOTT (ARCADE) ───────────────────────────────────────
+   Fully outside the adaptive engine, deliberately. It must never call
+   `applyAnswer`: that would leak speed-pressured latencies into `state.l`
+   (which sets the Shootout clock — playing arcade would silently tighten it,
+   the exact "improvement repaid with less time" treadmill the ratchet guard
+   exists to prevent), and a normal round-completion would advance `agg.correct`
+   (unlocks) and `agg.rounds` (the gate anti-cramming cooldown). Arcade writes
+   to its own namespace and nothing else.
+   ─────────────────────────────────────────────────────────── */
+
+export const ARCADE_DURATION_MS = 30000
+/** Recent runs kept per set — enough for a run-history strip, not a ledger */
+const ARCADE_RUN_MEMORY = 8
+
+export function emptyArcade() {
+  return {}
+}
+
+export const arcadeBest = (state, setId) => state.arcade?.[setId]?.best ?? 0
+export const arcadeRuns = (state, setId) => state.arcade?.[setId]?.runs ?? []
+
+/**
+ * Is this run among the child's best recent ones?
+ *
+ * A monotone personal best is hit on a shrinking fraction of runs by
+ * construction — after a handful of attempts, "did you beat your record" is a
+ * question that mostly answers no. Top-3-of-last-10 is a band that still fires
+ * often, so there is usually something true and positive to say.
+ */
+export function arcadeTier(state, setId, score) {
+  const prevBest = arcadeBest(state, setId)
+  if (score > prevBest) return 'best'
+  const runs = arcadeRuns(state, setId)
+  const top3 = [...runs, score].sort((a, b) => b - a).slice(0, 3)
+  if (top3.includes(score) && runs.length >= 2) return 'top3'
+  return null
+}
+
+/** Record one arcade run. Additive only — the best a child has ever scored
+    can never be reduced, and a bailed-early run is simply not recorded. */
+export function applyArcadeResult(state, { setId, score, at = Date.now() }) {
+  const prev = state.arcade?.[setId]
+  return {
+    ...state,
+    arcade: {
+      ...state.arcade,
+      [setId]: {
+        best: Math.max(prev?.best ?? 0, score),
+        runs: [...(prev?.runs ?? []), score].slice(-ARCADE_RUN_MEMORY),
+        at,
+      },
+    },
+  }
+}
 
 const EMPTY_REC = [0, 0, 0, 0]
 

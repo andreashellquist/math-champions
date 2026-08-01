@@ -4,6 +4,7 @@ import { setLocale } from '../i18n'
 import { opName } from '../game/config'
 import { emptyState } from '../game/mastery'
 import { buildQuestion } from '../game/questions'
+import { arcadeQuestionFor } from '../game/round'
 import { ALL_FACTS, factKey } from '../game/facts'
 import { makeRng } from '../game/rng'
 
@@ -330,5 +331,121 @@ describe('a demotion is named, not silent', () => {
     s = reducer(s, { type: 'ANSWER', value: w2, at: 3000 })
     expect(s.round.demotedTo).toBe(0)
     expect(typeof s.round.demotedTo).toBe('number')
+  })
+})
+
+describe('Snabbskott (arcade)', () => {
+  const ARCADE_FACTS = ALL_FACTS.filter(f => f.op === 'addition').slice(0, 6)
+
+  function arcadeRoundInProgress(overrides = {}) {
+    const fact = ARCADE_FACTS[0]
+    const question = arcadeQuestionFor(fact, { rng })
+    const s = reducer(initialState(emptyState()), {
+      type: 'START_ROUND', op: 'addition', mode: 'arcade', setId: 'addition.core',
+      queue: ARCADE_FACTS, fact, question, startedAt: 1000, timerMs: 30000,
+    })
+    return { ...s, round: { ...s.round, ...overrides }, question }
+  }
+
+  it('never calls applyAnswer — no agg, no latency, no box changes on a correct answer', () => {
+    const s0 = arcadeRoundInProgress()
+    const before = s0.mastery
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 1500 })
+
+    expect(s1.mastery).toBe(before)          // literally the same object — nothing touched it
+    expect(s1.round.goals).toBe(1)
+    expect(s1.round.phase).toBe('resolving')
+  })
+
+  it('never calls applyAnswer on a miss either, and never enters rebound/reveal', () => {
+    const s0 = arcadeRoundInProgress()
+    const wrong = s0.round.question.opts.find(o => o !== s0.round.question.ans)
+    const s1 = reducer(s0, { type: 'ANSWER', value: wrong, at: 1500 })
+
+    expect(s1.mastery).toBe(s0.mastery)
+    expect(s1.round.phase).toBe('resolving')  // not 'rebound' — arcade skips it entirely
+    expect(s1.round.arcadeMiss).toBe(true)
+    expect(s1.round.results).toEqual(['miss'])
+    expect(s1.round.missedKeys).toEqual([s0.round.fact.key])
+  })
+
+  it('does not reset the clock between kicks', () => {
+    // A per-kick reset would mean the score depends on the resolve/celebrate
+    // beat length rather than on the child — the whole point of one continuous
+    // round clock.
+    const s0 = arcadeRoundInProgress({ deadline: 31000 })
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 1500 })
+    expect(s1.round.deadline).toBe(31000)
+
+    const fact2 = ARCADE_FACTS[1]
+    const s2 = reducer(s1, {
+      type: 'ADVANCE', fact: fact2, question: arcadeQuestionFor(fact2, { rng }), at: 5000,
+    })
+    expect(s2.round.deadline).toBe(31000)     // unchanged, not recomputed from `at`
+  })
+
+  it('lets the item already showing finish before the round ends', () => {
+    let s = arcadeRoundInProgress()
+    s = reducer(s, { type: 'ARCADE_EXPIRE' })
+    expect(s.round.phase).toBe('asking')      // still answerable
+    expect(s.round.arcadeExpiring).toBe(true)
+
+    // The in-flight question still scores normally
+    const s1 = reducer(s, { type: 'ANSWER', value: s.round.question.ans, at: 31000 })
+    expect(s1.round.goals).toBe(1)
+    expect(s1.screen).not.toBe('result')      // not over yet — one more ADVANCE to go
+
+    const s2 = reducer(s1, { type: 'ADVANCE', fact: ARCADE_FACTS[1], question: s1.round.question, at: 31200 })
+    expect(s2.screen).toBe('result')
+    expect(s2.round.phase).toBe('done')
+  })
+
+  it('records the score and computes the tier exactly once, at finalisation', () => {
+    let s = arcadeRoundInProgress({ goals: 3 })
+    s = reducer(s, { type: 'ARCADE_EXPIRE' })
+    s = reducer(s, { type: 'ADVANCE', fact: null, question: null, at: 31000 })
+
+    expect(s.round.arcadeTierResult).toBe('best')   // first run ever on this set
+    expect(s.mastery.arcade['addition.core'].best).toBe(3)
+    expect(s.mastery.arcade['addition.core'].runs).toEqual([3])
+  })
+
+  it('never touches agg.rounds or agg.correct — those gate unlocks and gate cooldowns', () => {
+    let s = arcadeRoundInProgress()
+    const before = s.mastery.agg
+    s = reducer(s, { type: 'ARCADE_EXPIRE' })
+    s = reducer(s, { type: 'ADVANCE', fact: null, question: null, at: 31000 })
+    expect(s.mastery.agg).toEqual(before)
+  })
+
+  it('does not record a run the child stopped early', () => {
+    let s = arcadeRoundInProgress({ goals: 5 })
+    s = reducer(s, { type: 'END_ROUND' })
+
+    expect(s.round.stoppedEarly).toBe(true)
+    expect(s.mastery.arcade['addition.core']).toBeUndefined()   // never written
+    expect(s.mastery.agg.rounds).toBe(0)                        // not even the lifetime count
+  })
+
+  it('a personal best can only ever rise', () => {
+    let s = arcadeRoundInProgress({ goals: 10 })
+    s = reducer(s, { type: 'ARCADE_EXPIRE' })
+    s = reducer(s, { type: 'ADVANCE', fact: null, question: null, at: 31000 })
+    expect(s.mastery.arcade['addition.core'].best).toBe(10)
+
+    // A worse run afterwards must not lower it
+    let s2 = { ...s, screen: 'game', round: { ...s.round, phase: 'asking', goals: 2, arcadeExpiring: false } }
+    s2 = reducer(s2, { type: 'ARCADE_EXPIRE' })
+    s2 = reducer(s2, { type: 'ADVANCE', fact: null, question: null, at: 62000 })
+    expect(s2.mastery.arcade['addition.core'].best).toBe(10)
+    expect(s2.round.arcadeTierResult).not.toBe('best')
+  })
+
+  it('ignores a second answer for the same item — the double-tap guard still applies', () => {
+    const s0 = arcadeRoundInProgress()
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 1500 })
+    const s2 = reducer(s1, { type: 'ANSWER', value: s0.round.question.ans, at: 1501 })
+    expect(s2).toBe(s1)
+    expect(s2.round.goals).toBe(1)
   })
 })

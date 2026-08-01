@@ -13,10 +13,12 @@
  * session, never a white screen.
  */
 import {
-  emptyState, emptyRivalry, emptyGates, STATE_VERSION, OP_KEYS, COMPETITIONS,
-  TIE_TARGET, GATES, GATE_SIZE,
+  emptyState, emptyRivalry, emptyGates, emptyArcade, STATE_VERSION, OP_KEYS,
+  COMPETITIONS, TIE_TARGET, GATES, GATE_SIZE,
 } from './mastery'
 import { RIVAL_IDS } from './rivals'
+import { THEMES } from './theme'
+import { ARCADE_SETS } from './arcadeSets'
 
 const KEY = 'mc_state'
 const LEGACY_CORRECT = 'mc_correct'
@@ -115,7 +117,24 @@ export function sanitize(raw) {
     l: Array.isArray(raw.l) ? raw.l.map(x => int(x, 0, 60000)).slice(-30) : [],
     rivalry: cleanRivalry(raw.rivalry),
     gates: cleanGates(raw.gates),
+    arcade: cleanArcade(raw.arcade),
   }
+}
+
+/** Arcade bests. Bounded by the set list, so it cannot grow with play. */
+function cleanArcade(raw) {
+  const out = emptyArcade()
+  if (!raw || typeof raw !== 'object') return out
+  for (const set of ARCADE_SETS) {
+    const rec = raw[set.id]
+    if (!rec || typeof rec !== 'object') continue
+    out[set.id] = {
+      best: int(rec.best, 0, 999),
+      runs: Array.isArray(rec.runs) ? rec.runs.map(x => int(x, 0, 999)).slice(-8) : [],
+      at: int(rec.at, 0, Number.MAX_SAFE_INTEGER),
+    }
+  }
+  return out
 }
 
 /** Season state. Bounded by the rival roster, so it can't grow with play time. */
@@ -190,6 +209,8 @@ const MIGRATIONS = {
   3: prev => ({ ...prev, v: 4, l: [] }),
   // v5 adds the gate ledger. Empty is correct — no gate has been sat yet.
   4: prev => ({ ...prev, v: 5, gates: emptyGates() }),
+  // v6 adds arcade bests. Empty is correct — no run has been played yet.
+  5: prev => ({ ...prev, v: 6, arcade: emptyArcade() }),
 }
 
 /* ── PUBLIC API ────────────────────────────────────────────── */
@@ -252,7 +273,7 @@ export function clear() {
 /* ── SETTINGS (small, separate, survives a progress reset) ── */
 
 const SETTINGS_KEY = 'mc_settings'
-const DEFAULT_SETTINGS = { sound: true, character: 'haaland', shootoutOptIn: false, locale: null }
+const DEFAULT_SETTINGS = { sound: true, character: 'haaland', shootoutOptIn: false, locale: null, pitchTheme: 'auto' }
 
 export function loadSettings() {
   try {
@@ -264,6 +285,7 @@ export function loadSettings() {
       character: typeof parsed?.character === 'string' ? parsed.character : DEFAULT_SETTINGS.character,
       shootoutOptIn: parsed?.shootoutOptIn === true,
       locale: typeof parsed?.locale === 'string' ? parsed.locale : null,
+      pitchTheme: THEMES.includes(parsed?.pitchTheme) ? parsed.pitchTheme : 'auto',
     }
   } catch {
     return { ...DEFAULT_SETTINGS }
@@ -370,6 +392,7 @@ function loadSettingsShape(raw) {
     locale: typeof raw?.locale === 'string' ? raw.locale : null,
     extraTime: Number.isFinite(raw?.extraTime) ? Math.min(2, Math.max(1, raw.extraTime)) : 1,
     rival: typeof raw?.rival === 'string' ? raw.rival : null,
+    pitchTheme: THEMES.includes(raw?.pitchTheme) ? raw.pitchTheme : 'auto',
   }
 }
 

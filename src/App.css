@@ -5,12 +5,35 @@
 :root {
   --pitch-deep: #0f4a26;
   --pitch:      #1e7a42;
+  --grass-a:    #2a7a40;
+  --grass-b:    #349c52;
   --gold:       #ffe234;
   --gold-deep:  #ffa500;
   --ink:        #0f4a26;
   --motion: 1;
 }
 @media (prefers-reduced-motion: reduce) { :root { --motion: 0; } }
+
+/* ── SEASONAL PITCH THEMES ────────────────────
+   Four reskins, set via `body[data-theme]` from game/theme.js. Every theme
+   keeps roughly the lightness of the spring default — only the hue moves —
+   because `.subtitle`, `.map-bar-caption` and gold accents are all light
+   colours tuned against this gradient in one place. A genuinely bright winter
+   pitch would mean re-auditing every light-on-dark string in the app; staying
+   dark-toned means the existing palette keeps working everywhere for free.
+   Measured: every theme clears 3:1 for the lightest body text against both
+   ends of its gradient. */
+body[data-theme="summer"] {
+  --pitch: #237a3f; --pitch-deep: #0d5a2c; --grass-a: #2f8a44; --grass-b: #3fae5c;
+}
+body[data-theme="autumn"] {
+  --pitch: #8a5a2e; --pitch-deep: #3a2410; --grass-a: #7a4a20; --grass-b: #a06a30;
+}
+body[data-theme="winter"] {
+  /* A night match under floodlights with snow falling, not a literal white
+     pitch — see the CSS note above for why. */
+  --pitch: #3a5a72; --pitch-deep: #12222e; --grass-a: #4a6a80; --grass-b: #dce9f2;
+}
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -380,9 +403,26 @@ body::before {
   bottom: 0; left: 0; right: 0;
   height: 18px;
   background: repeating-linear-gradient(
-    90deg, #2a7a40 0, #2a7a40 36px, #349c52 36px, #349c52 72px
+    90deg, var(--grass-a) 0, var(--grass-a) 36px, var(--grass-b) 36px, var(--grass-b) 72px
   );
   border-radius: 0 0 10px 10px;
+}
+
+/* ── SEASONAL DECORATION ──────────────────────
+   A handful of drifting particles inside the stage only — never full-page,
+   never over the question or answers. Pure decoration: aria-hidden and
+   pointer-events:none, and the whole layer is skipped when --motion is 0. */
+.seasonal-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.seasonal-piece {
+  position: absolute;
+  top: -10%;
+  font-size: 14px;
+  opacity: .85;
+  animation: seasonal-drift var(--dur, 6s) linear infinite;
+}
+@keyframes seasonal-drift {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(var(--dx, 10px), 130%) rotate(var(--rot, 90deg)); }
 }
 .penalty-spot {
   position: absolute;
@@ -738,6 +778,7 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .stage.shake, .shot-clock[data-urgency="2"], .ans-btn.reveal { animation: none; }
+  .seasonal-layer { display: none; }
 }
 
 /* ── DERBY ───────────────────────────────── */
@@ -1029,3 +1070,75 @@ body::before {
   background: #f0faf4; border-radius: 10px; padding: 5px 10px;
   font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums;
 }
+
+/* ── SNABBSKOTT (ARCADE) ───────────────────────
+   A live score in the round bar replaces kick dots — the clock, not a fact
+   count, ends this mode, so dots for a 150-item tiled queue would be noise. */
+.arcade-score {
+  font-weight: 900;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A run-history strip instead of a personal-best comparison: it shows
+   variance and trend, never a binary "you lost to your own record". */
+.arcade-strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 60px;
+  width: 100%;
+  max-width: 220px;
+  margin: 10px auto 4px;
+}
+.arcade-bar {
+  flex: 1;
+  min-height: 14px;
+  border-radius: 4px 4px 2px 2px;
+  background: #cfe9d8;
+}
+.arcade-bar.latest { background: var(--gold-deep); }
+.arcade-best-label {
+  font-size: .82rem;
+  color: #5f5f5f;
+  font-weight: 700;
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── PITCH THEME PICKER ────────────────────── */
+.theme-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+  max-width: 460px;
+  margin-bottom: 18px;
+}
+.theme-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 84px;
+  min-height: 56px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,.10);
+  border: 3px solid transparent;
+  border-radius: 14px;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+/* Selection never relies on colour alone: a border plus a check-style label */
+.theme-chip.selected { border-color: var(--gold); background: rgba(255,255,255,.18); }
+.theme-swatch {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.5);
+}
+.theme-sub { font-size: .68rem; font-weight: 400; color: #c8f0d6; }

@@ -2,7 +2,9 @@ import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { ratingFor } from '../game/config'
 import { computeTimeLimit } from '../hooks/useDeadline'
-import { masteredCount, labelForKey, GATE_PASS } from '../game/mastery'
+import {
+  masteredCount, labelForKey, GATE_PASS, ARCADE_DURATION_MS, arcadeBest, arcadeRuns,
+} from '../game/mastery'
 import Player from './Player'
 import Confetti from './Confetti'
 
@@ -24,6 +26,13 @@ export default function ResultScreen() {
   const missedLabels = [...new Set(r.missedKeys ?? [])].slice(0, 6).map(labelForKey)
 
   const replay = () => {
+    // Snabbskott restarts itself: same set, same fixed duration. No
+    // `computeTimeLimit` — comparability across runs is the entire point.
+    if (r.mode === 'arcade') {
+      startRound(r.op, { mode: 'arcade', setId: r.setId, timerMs: ARCADE_DURATION_MS })
+      return
+    }
+
     const timerMs = r.mode === 'shootout' && !r.clockOff
       ? computeTimeLimit({ op: r.op, latencies: state.mastery.l, previousT: r.timerMs, extraTime: state.settings.extraTime })
       : null
@@ -57,7 +66,54 @@ export default function ResultScreen() {
           <Player id={state.settings.character} pose={goals >= 3 ? 'celebrate' : 'idle'} size={92} />
         </div>
 
-        {r.mode === 'gate' ? (
+        {r.mode === 'arcade' ? (
+          <>
+            {/* No stars, no rating band — this is a count, not a verdict.
+                The headline is this run's score, alone: a personal best is a
+                monotone maximum, so after enough runs "did you beat your
+                record" mostly answers no, and that shouldn't be the thing a
+                child reads every single time they finish. */}
+            <div className="result-score">{t('arcade.runScore', { n: goals })}</div>
+
+            {r.stoppedEarly ? (
+              <p className="result-msg">{t('arcade.stoppedEarly', { n: goals })}</p>
+            ) : (
+              <>
+                {r.arcadeTierResult === 'best' && <p className="result-msg">{t('arcade.newBest')}</p>}
+                {r.arcadeTierResult === 'top3' && <p className="result-msg">{t('arcade.topThree')}</p>}
+                {!r.arcadeTierResult && <p className="result-msg">{t('arcade.justForFun')}</p>}
+
+                {/* A run-history strip instead of a PB comparison — it shows
+                    variance and trend, not a binary "you lost to yourself". */}
+                <div className="arcade-strip" role="img" aria-label={t('arcade.stripLabel')}>
+                  {(() => {
+                    const runs = arcadeRuns(state.mastery, r.setId)
+                    const best = arcadeBest(state.mastery, r.setId) || 1
+                    return runs.map((score, i) => (
+                      <span
+                        key={i}
+                        className={`arcade-bar${i === runs.length - 1 ? ' latest' : ''}`}
+                        style={{ height: `${Math.max(14, Math.round((score / best) * 100))}%` }}
+                      />
+                    ))
+                  })()}
+                </div>
+                <p className="arcade-best-label">
+                  {t('arcade.bestLabel', { n: arcadeBest(state.mastery, r.setId) })}
+                </p>
+
+                {missedLabels.length > 0 && (
+                  <>
+                    <p className="result-footnote">{t('arcade.checkNext')}</p>
+                    <ul className="gate-missed">
+                      {missedLabels.slice(0, 3).map(l => <li key={l}>{l}</li>)}
+                    </ul>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        ) : r.mode === 'gate' ? (
           <>
             {/* No pass/fail stamp, no grade, no stars. The headline is which
                 facts were identified, not the score. */}
@@ -153,7 +209,11 @@ export default function ResultScreen() {
         )}
       </div>
 
-      {goals >= 4 && <Confetti trigger={1} count={40} />}
+      {/* Arcade saves the full celebration for an actual personal best — at
+          typical arcade scores, "goals >= 4" would fire on nearly every run. */}
+      {(r.mode === 'arcade' ? r.arcadeTierResult === 'best' : goals >= 4) && (
+        <Confetti trigger={1} count={40} />
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import {
   emptyState, applyAnswer, composeRound, composeMixed, mixedReady, isFatiguing,
   openStrands, boxOf, masteredCount, recentAccuracy, optionCountFor, workingOn,
   labelForKey, MASTERED_BOX, OP_KEYS,
+  emptyArcade, applyArcadeResult, arcadeTier, arcadeBest, arcadeRuns,
 } from './mastery'
 import { STRANDS_BY_OP, answerOf, factKey } from './facts'
 import { computeTimeLimit, TIMER_FLOOR } from '../hooks/useDeadline'
@@ -319,5 +320,81 @@ describe('workingOn only reports facts the ladder can serve', () => {
     s.f[f2.key] = [1, 0, 0, 9]
     s.f[f3.key] = [1, 0, 0, 5]
     expect(workingOn(s, 3).map(x => x.key)).toEqual([f2.key, f3.key, f1.key])
+  })
+})
+
+describe('Snabbskott (arcade) results', () => {
+  it('starts empty', () => {
+    expect(emptyArcade()).toEqual({})
+    expect(arcadeBest(emptyState(), 'addition.core')).toBe(0)
+    expect(arcadeRuns(emptyState(), 'addition.core')).toEqual([])
+  })
+
+  it('a personal best only ever rises', () => {
+    let s = emptyState()
+    s = applyArcadeResult(s, { setId: 'addition.core', score: 8 })
+    expect(arcadeBest(s, 'addition.core')).toBe(8)
+
+    s = applyArcadeResult(s, { setId: 'addition.core', score: 5 })
+    expect(arcadeBest(s, 'addition.core')).toBe(8)   // a worse run cannot lower it
+
+    s = applyArcadeResult(s, { setId: 'addition.core', score: 12 })
+    expect(arcadeBest(s, 'addition.core')).toBe(12)
+  })
+
+  it('keeps a bounded run history rather than an unbounded log', () => {
+    let s = emptyState()
+    for (let i = 0; i < 20; i++) s = applyArcadeResult(s, { setId: 'addition.core', score: i })
+    expect(arcadeRuns(s, 'addition.core').length).toBeLessThanOrEqual(8)
+    expect(arcadeRuns(s, 'addition.core').at(-1)).toBe(19)   // most recent kept
+  })
+
+  it('keeps sets independent of each other', () => {
+    let s = emptyState()
+    s = applyArcadeResult(s, { setId: 'addition.core', score: 9 })
+    s = applyArcadeResult(s, { setId: 'multiplication.core', score: 4 })
+    expect(arcadeBest(s, 'addition.core')).toBe(9)
+    expect(arcadeBest(s, 'multiplication.core')).toBe(4)
+  })
+
+  describe('arcadeTier', () => {
+    it('calls the very first run on a set a personal best', () => {
+      expect(arcadeTier(emptyState(), 'addition.core', 3)).toBe('best')
+    })
+
+    it('is a best only when it strictly beats the previous record', () => {
+      let s = applyArcadeResult(emptyState(), { setId: 'addition.core', score: 10 })
+      expect(arcadeTier(s, 'addition.core', 10)).not.toBe('best')   // tying isn't beating
+      expect(arcadeTier(s, 'addition.core', 11)).toBe('best')
+    })
+
+    it('recognises a top-three run that is not a new best', () => {
+      let s = emptyState()
+      for (const score of [10, 6, 4]) s = applyArcadeResult(s, { setId: 'addition.core', score })
+      // History is [10, 6, 4]; an 8 lands in the top three without being a best
+      expect(arcadeTier(s, 'addition.core', 8)).toBe('top3')
+    })
+
+    it('says neither for a run that is not close to the best runs', () => {
+      let s = emptyState()
+      for (const score of [10, 9, 8, 7, 6]) s = applyArcadeResult(s, { setId: 'addition.core', score })
+      expect(arcadeTier(s, 'addition.core', 2)).toBeNull()
+    })
+
+    // The one-part rule this whole mechanic exists to satisfy: a monotone
+    // personal best is hit less and less often the more a child plays, so the
+    // tier must not just be "is this the best" — most runs need something
+    // true and positive left to say.
+    it('finds a non-null verdict is reachable on a plausible run of attempts', () => {
+      let s = emptyState()
+      const seenTier = new Set()
+      const scores = [5, 7, 6, 8, 7, 9, 6, 8, 10, 7]
+      for (const score of scores) {
+        seenTier.add(arcadeTier(s, 'addition.core', score))
+        s = applyArcadeResult(s, { setId: 'addition.core', score })
+      }
+      expect(seenTier.has('best')).toBe(true)
+      expect(seenTier.has('top3')).toBe(true)
+    })
   })
 })

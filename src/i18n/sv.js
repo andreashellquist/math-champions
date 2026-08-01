@@ -52,6 +52,16 @@ export default {
     subtitle: 'Alla är med i truppen. Byt hur ofta du vill!',
   },
 
+  theme: {
+    title: 'Planen',
+    subtitle: 'Byt look på planen — ingen kostar något.',
+    auto:    { label: 'Auto', sub: 'Följer årstiden' },
+    spring:  { label: 'Vår',    sub: '' },
+    summer:  { label: 'Sommar', sub: '' },
+    autumn:  { label: 'Höst',   sub: '' },
+    winter:  { label: 'Vinter', sub: '' },
+  },
+
   game: {
     kickOf: '{n}/{total}',
     entryNote: 'Nu skriver du svaret själv. Det känns svårare — det är meningen. Så fastnar det.',
@@ -382,6 +392,20 @@ export default {
       identity: "Vanligaste snedsteget nu: reglerna för noll och ett.",
       fallback: "Inget tydligt mönster just nu.",
     },
+  },
+
+  arcade: {
+    chip: "⚡ Snabbskott ({n} tal)",
+    lastBall: "Sista bollen!",
+    liveScore: "⚽ {n}",
+    runScore: "{n} mål på 30 sekunder",
+    newBest: "🏆 Ditt bästa hittills!",
+    topThree: "⚡ En av dina tre bästa.",
+    justForFun: "Bara för skoj skull — det här påverkar inte din träning.",
+    stoppedEarly: "Du hann {n} innan du la av. Vi räknade inte den — kör igen när du vill.",
+    stripLabel: "Dina senaste resultat",
+    bestLabel: "Ditt bästa: {n}",
+    checkNext: "Kolla dessa till nästa gång:",
   },
 
   gate: {

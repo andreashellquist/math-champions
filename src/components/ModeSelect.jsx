@@ -8,6 +8,8 @@ import {
 import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
 import { clockScaleFor } from '../game/rivals'
+import { arcadeSetsFor } from '../game/arcadeSets'
+import { ARCADE_DURATION_MS } from '../game/mastery'
 
 /**
  * Shootout is offered only to a child who already has the facts — it's a
@@ -57,6 +59,11 @@ export default function ModeSelect() {
     startRound(op, { mode, timerMs })
   }
 
+  // Snabbskott: a fixed, published duration — no `computeTimeLimit`, no rival
+  // scaling. Comparability across runs is the entire point of the mode, so
+  // nothing here personalises or varies the clock.
+  const playArcade = set => startRound(set.op, { mode: 'arcade', setId: set.id, timerMs: ARCADE_DURATION_MS })
+
   return (
     <div className="screen">
       <h1 className="title" style={{ fontSize: '1.9rem' }}>{t('mode.title')}</h1>
@@ -87,6 +94,18 @@ export default function ModeSelect() {
               {unlocked && shootoutOffered(mastery, op) && (
                 <button className="shootout-chip" onClick={() => play(op, 'shootout')}>
                   {t('mode.shootout')}
+                </button>
+              )}
+
+              {/* Snabbskott: always reachable once the operation is unlocked —
+                  there's no accuracy gate, because unlike Shootout this mode
+                  never feeds the adaptive engine, so there's no bad evidence
+                  to protect it from. Same visual weight as Shootout: a small
+                  chip, never the gold primary action, never reachable from
+                  one-tap start. */}
+              {unlocked && arcadeSetsFor(op)[0] && (
+                <button className="shootout-chip" onClick={() => playArcade(arcadeSetsFor(op)[0])}>
+                  {t('arcade.chip', { n: arcadeSetsFor(op)[0].facts.length })}
                 </button>
               )}
             </div>

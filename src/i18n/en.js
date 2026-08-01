@@ -44,6 +44,16 @@ export default {
     subtitle: 'Everyone\'s in the squad. Swap as often as you like!',
   },
 
+  theme: {
+    title: 'The Pitch',
+    subtitle: 'Change how the pitch looks — none of it costs anything.',
+    auto:    { label: 'Auto', sub: 'Follows the season' },
+    spring:  { label: 'Spring', sub: '' },
+    summer:  { label: 'Summer', sub: '' },
+    autumn:  { label: 'Autumn', sub: '' },
+    winter:  { label: 'Winter', sub: '' },
+  },
+
   game: {
     kickOf: '{n}/{total}',
     entryNote: "Now you type the answer yourself. It feels harder — that's the point. That's how it sticks.",
@@ -374,6 +384,20 @@ export default {
       identity: "Most common slip right now: the rules for zero and one.",
       fallback: "No clear pattern right now.",
     },
+  },
+
+  arcade: {
+    chip: "⚡ Quick Shots ({n} facts)",
+    lastBall: "Last ball!",
+    liveScore: "⚽ {n}",
+    runScore: "{n} goals in 30 seconds",
+    newBest: "🏆 Your best yet!",
+    topThree: "⚡ One of your best three.",
+    justForFun: "Just for fun — this doesn't affect your training.",
+    stoppedEarly: "You got {n} before you stopped. We didn't count that one — go again whenever you like.",
+    stripLabel: "Your recent runs",
+    bestLabel: "Your best: {n}",
+    checkNext: "Check these next time:",
   },
 
   gate: {

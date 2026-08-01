@@ -222,7 +222,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-218 tests. The valuable ones are property-based: every hint is checked for
+265 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
@@ -259,10 +259,54 @@ clamped rather than trusted.
 
 ---
 
+## Seasonal pitch
+
+Four reskins tied to the Swedish calendar (`game/theme.js`), auto-selected
+from the current month with a free manual override in the roster screen —
+same rule as the character roster: cosmetic, never earned. Every theme keeps
+roughly the *lightness* of the spring default; only the hue moves. The whole
+app is light text and gold accents over a dark pitch, tuned against that
+gradient in one place — a genuinely bright winter-white pitch would mean
+re-auditing every light-on-dark string in the app, so winter is a night match
+under floodlights with snow falling instead of a literal white field. Every
+theme is measured to clear 3:1 contrast against both ends of its gradient.
+
+## Snabbskott (arcade)
+
+A fixed 30-second, fixed-content, personal-best sprint per operation — built
+after both the pedagogy and ADHD reviewers were asked specifically whether a
+"highscore mode" belonged in this app at all. Verdict from both: yes, with
+real changes to the obvious version.
+
+It sits **fully outside the adaptive engine.** It never calls `applyAnswer` —
+doing so would leak speed-pressured latencies into the number that sets the
+Shootout clock, and would advance the counters that gate operation unlocks and
+the Uttagningen cooldown. It has its own namespace (`mastery.arcade`) and
+touches nothing else.
+
+The headline is **this run's score, alone** — not a comparison against the
+personal best. A monotone best is hit less and less often the more a child
+plays; showing "no new record" as the modal outcome of a mode whose only goal
+is beating your record would make repeat play mostly say no. A run-history
+strip shows trend instead, and a softer "one of your best three" band fires
+far more often than an outright record.
+
+Content is a **named, fixed fact set — same facts, reshuffled order every
+run.** Same order would mean a well-practised child starts answering from
+screen position rather than computing; same content is what makes the score
+comparable across attempts at all. Distractor values are seeded per fact (so a
+set is never secretly easier or harder some runs) while their position varies
+every run (so the layout can't be memorised either) — see `round.test.js`.
+
+The clock finishes whatever item is already showing before it ends the round —
+see `ARCADE_EXPIRE` in the reducer — so nothing is ever cut away under the
+child mid-question.
+
+---
+
 ## TODO
 
 - [ ] A custom player the child names and kits themselves — the self-reference
       effect is real, and it is the honest answer for a child who isn't any of
       the seven
-- [ ] Seasonal pitch themes
 - [ ] Real cross-device sync, if it is ever worth the account and the server

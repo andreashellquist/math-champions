@@ -11,6 +11,7 @@ import MasteryMap from './components/MasteryMap'
 import SeasonScreen from './components/SeasonScreen'
 import ParentView from './components/ParentView'
 import UnlockToast from './components/UnlockToast'
+import { resolveTheme } from './game/theme'
 
 const SCREENS = {
   menu:   MenuScreen,
@@ -32,6 +33,12 @@ function Shell() {
 
   useEffect(installAudioUnlock, [])
   useEffect(() => { setSoundEnabled(state.settings.sound) }, [state.settings.sound])
+
+  /* One data attribute drives the whole reskin — see game/theme.js for why the
+     palette stays dark-toned across all four seasons. */
+  useEffect(() => {
+    document.body.dataset.theme = resolveTheme(state.settings.pitchTheme)
+  }, [state.settings.pitchTheme])
 
   /* Hold an unlock until the child is between rounds. Good news landing over a
      live question is still an interruption, and an assertive live region cuts

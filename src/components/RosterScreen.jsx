@@ -1,6 +1,7 @@
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { ROSTER } from '../game/characters'
+import { THEMES, PALETTE, resolveTheme } from '../game/theme'
 import Player from './Player'
 
 /**
@@ -17,6 +18,8 @@ export default function RosterScreen() {
   const { state, dispatch } = useGame()
   const { t } = useTranslation()
   const selected = state.settings.character
+  const pitchSetting = state.settings.pitchTheme ?? 'auto'
+  const activeTheme = resolveTheme(pitchSetting)
 
   return (
     <div className="screen">
@@ -44,6 +47,32 @@ export default function RosterScreen() {
               />
               <span className="roster-name">{c.short}</span>
               <span className="roster-meta">{c.flag} #{c.number}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <h2 className="title" style={{ fontSize: '1.4rem', marginTop: 8 }}>{t('theme.title')}</h2>
+      <p className="subtitle" style={{ marginBottom: 12 }}>{t('theme.subtitle')}</p>
+
+      <div className="theme-picker">
+        {['auto', ...THEMES].map(id => {
+          const isSelected = pitchSetting === id
+          const swatch = PALETTE[id === 'auto' ? activeTheme : id]
+          return (
+            <button
+              key={id}
+              className={`theme-chip${isSelected ? ' selected' : ''}`}
+              aria-pressed={isSelected}
+              onClick={() => dispatch({ type: 'SET_SETTING', key: 'pitchTheme', value: id })}
+            >
+              <span
+                className="theme-swatch"
+                aria-hidden="true"
+                style={{ background: `linear-gradient(135deg, ${swatch.pitch}, ${swatch.pitchDeep})` }}
+              />
+              <span className="theme-label">{t(`theme.${id}.label`)}</span>
+              {id === 'auto' && <span className="theme-sub">{t('theme.auto.sub')}</span>}
             </button>
           )
         })}

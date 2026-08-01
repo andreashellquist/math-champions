@@ -17,6 +17,7 @@ import { getHint } from '../game/hints'
 import { classifyChoice } from '../game/distractors'
 import {
   applyAnswer, emptyState, MIN_REQUEUE_GAP, applyFixtureResult, applyGateResult,
+  applyArcadeResult, arcadeTier,
 } from '../game/mastery'
 
 export const TOTAL_KICKS = 5
@@ -134,6 +135,8 @@ export function reducer(state, action) {
           op: action.op,
           mode: action.mode ?? 'training',
           gateId: action.gateId ?? null,
+          setId: action.setId ?? null,
+          arcadeExpiring: false,
           missedKeys: [],
           totalKicks: action.totalKicks ?? TOTAL_KICKS,
           queue: action.queue ?? [],
@@ -169,6 +172,34 @@ export function reducer(state, action) {
       if (r.disabled.includes(action.value)) return state
 
       const { question, fact } = r
+
+      /* ── Snabbskott (arcade): a self-contained, much simpler machine ──
+         Never touches the adaptive engine — no `applyAnswer`, no rebound, no
+         forced-reveal tap. A miss still shows the correct answer briefly
+         (error correction, not kindness: the same fact comes round again
+         later in this run) but nothing here requires a tap or holds the
+         child in place. See `mastery.js`'s Snabbskott section for why this
+         mode may never call `applyAnswer`. */
+      if (r.mode === 'arcade') {
+        const arcadeCorrect = action.value === question.ans
+        const trajectory = trajectoryFor(r.kickIdx, question.ans)
+        return {
+          ...state,
+          round: {
+            ...r,
+            phase: 'resolving',
+            chosen: action.value,
+            goals: r.goals + (arcadeCorrect ? 1 : 0),
+            results: [...r.results, arcadeCorrect ? 'goal' : 'miss'],
+            missedKeys: arcadeCorrect ? r.missedKeys : [...r.missedKeys, fact.key],
+            arcadeMiss: !arcadeCorrect,
+            trajectory,
+            dive: diveFor(trajectory, arcadeCorrect),
+            deadline: r.deadline,   // the round clock is untouched by any kick
+          },
+        }
+      }
+
       const correct = action.value === question.ans
       const latencyMs = action.at - r.askedAt
       // `r.timedOut` is set by the TIMEOUT action, which also clears the
@@ -327,13 +358,24 @@ export function reducer(state, action) {
       const suddenDeathOver =
         r.suddenDeath && (!lastWasGoal || r.results.length >= total + SUDDEN_DEATH_MAX)
 
-      const done = nextIdx >= total
+      // The clock — not the queue — ends an arcade run. `arcadeExpiring` is set
+      // by ARCADE_EXPIRE when the deadline fires; the item already in flight is
+      // always allowed to finish first, so this is only ever checked here, one
+      // kick later, never mid-answer.
+      const arcadeOver = r.mode === 'arcade' && r.arcadeExpiring
+
+      const done = arcadeOver || (nextIdx >= total
         ? (r.suddenDeath ? suddenDeathOver : !enteringSuddenDeath)
-        : false
+        : false)
 
       if (done || !action.question) {
-        let mastery = { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } }
-        let tieWon = null, seasonWon = null
+        // Arcade must not touch `agg` at all — see mastery.js's Snabbskott
+        // section for why (it would leak into the Shootout clock and gate
+        // cooldown). Every other mode increments the lifetime round count.
+        let mastery = r.mode === 'arcade'
+          ? state.mastery
+          : { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } }
+        let tieWon = null, seasonWon = null, arcadeTierResult = null
 
         // A gate certifies and nothing more. It cannot withhold anything, so
         // there is no branch here that changes what is available.
@@ -357,11 +399,19 @@ export function reducer(state, action) {
           mastery = { ...next, justWonTie: undefined, justWonSeason: undefined }
         }
 
+        // A monotone personal best is hit less and less often the more a
+        // child plays — computed before the write, so "was THIS run a best"
+        // can still be answered after the record moves.
+        if (r.mode === 'arcade' && r.setId) {
+          arcadeTierResult = arcadeTier(mastery, r.setId, r.goals)
+          mastery = applyArcadeResult(mastery, { setId: r.setId, score: r.goals, at: action.at ?? Date.now() })
+        }
+
         return {
           ...state,
           screen: 'result',
           mastery,
-          round: { ...r, phase: 'done', tieWon, seasonWon },
+          round: { ...r, phase: 'done', tieWon, seasonWon, arcadeTierResult },
         }
       }
 
@@ -383,10 +433,31 @@ export function reducer(state, action) {
           dive: 'none',
           timedOut: false,
           flourish: null,
+          arcadeMiss: false,
           askedAt: action.at,
-          deadline: r.clockOff || !r.timerMs ? null : action.at + r.timerMs,
+          // Arcade runs one clock for the whole round, armed once at
+          // START_ROUND — recomputing it here would reset the countdown on
+          // every single kick instead of letting it run down.
+          deadline: r.mode === 'arcade'
+            ? r.deadline
+            : (r.clockOff || !r.timerMs ? null : action.at + r.timerMs),
         },
       }
+    }
+
+    /**
+     * The Snabbskott clock ran out.
+     *
+     * Does not end anything by itself — it only marks the round. Whatever item
+     * was already showing is still answerable; the score only finalises the
+     * next time ADVANCE runs, so the child always gets to finish the ball that
+     * was in flight when the whistle went rather than having it cut away
+     * under them.
+     */
+    case 'ARCADE_EXPIRE': {
+      const r = state.round
+      if (!r || r.mode !== 'arcade' || r.arcadeExpiring) return state
+      return { ...state, round: { ...r, arcadeExpiring: true } }
     }
 
     /**
@@ -396,10 +467,18 @@ export function reducer(state, action) {
      * that exit teaches nothing and records nothing. Deliberately does NOT call
      * applyFixtureResult: a round the child ended must never increment
      * `played`, which is the closest thing to a loss tally in the whole model.
+     *
+     * Arcade is stricter still: a bailed-early run is not a real attempt at the
+     * score, so it skips both `agg.rounds` and `applyArcadeResult` entirely —
+     * it must never appear in the run-history strip or be eligible to set a
+     * personal best.
      */
     case 'END_ROUND': {
       const r = state.round
       if (!r) return state
+      if (r.mode === 'arcade') {
+        return { ...state, screen: 'result', round: { ...r, phase: 'done', stoppedEarly: true } }
+      }
       return {
         ...state,
         screen: 'result',

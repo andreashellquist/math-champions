@@ -48,13 +48,13 @@ export function GameProvider({ children }) {
     }
   }, [])
 
-  const startRound = useCallback((op, { mode = 'training', timerMs = null, kicks = TOTAL_KICKS, gateId = null } = {}) => {
-    const queue = buildRoundQueue(state.mastery, op, { mode, size: kicks })
+  const startRound = useCallback((op, { mode = 'training', timerMs = null, kicks = TOTAL_KICKS, gateId = null, setId = null } = {}) => {
+    const queue = buildRoundQueue(state.mastery, op, { mode, size: kicks, setId })
     if (!queue.length) return
     setSessionRounds(n => n + 1)
     dispatch({
       type: 'START_ROUND',
-      op, mode, queue, timerMs, totalKicks: kicks, gateId,
+      op, mode, queue, timerMs, totalKicks: kicks, gateId, setId,
       fact: queue[0],
       question: questionFor(state.mastery, queue[0], { mode }),
       startedAt: Date.now(),

@@ -235,3 +235,47 @@ describe('backup — the manual bridge between devices', () => {
     expect(load().agg.correct).toBe(0)          // ignored rather than guessed at
   })
 })
+
+describe('arcade bests (v6)', () => {
+  it('migrates a v5 save with an empty arcade ledger', () => {
+    __resetStorage(); localStorage.clear()
+    localStorage.setItem('mc_state', JSON.stringify({
+      v: 5, n: 40, f: { 'a3.4': [3, 2, 1, 0] }, gates: {},
+    }))
+    const s = load()
+    expect(s.v).toBe(6)
+    expect(s.arcade).toEqual({})
+    expect(s.f['a3.4']).toEqual([3, 2, 1, 0])   // mastery untouched by the migration
+  })
+
+  it('drops an arcade record for a set that no longer exists', () => {
+    const s = sanitize({ arcade: { 'addition.core': { best: 5, runs: [5] }, 'nope.core': { best: 99, runs: [99] } } })
+    expect(s.arcade['addition.core']).toEqual({ best: 5, runs: [5], at: 0 })
+    expect(s.arcade['nope.core']).toBeUndefined()
+  })
+
+  it('clamps a corrupt arcade record rather than trusting it', () => {
+    const s = sanitize({ arcade: { 'addition.core': { best: -5, runs: ['x', 9999, 3] } } })
+    expect(s.arcade['addition.core'].best).toBe(0)
+    expect(s.arcade['addition.core'].runs).toEqual([0, 999, 3])
+  })
+
+  it('bounds run history the same way a fresh state does', () => {
+    const s = sanitize({ arcade: { 'addition.core': { best: 20, runs: Array(50).fill(1) } } })
+    expect(s.arcade['addition.core'].runs.length).toBeLessThanOrEqual(8)
+  })
+
+  it('round-trips through export/import', () => {
+    __resetStorage(); localStorage.clear()
+    let s = emptyState()
+    s = { ...s, arcade: { 'addition.core': { best: 14, runs: [10, 14], at: 12345 } } }
+    save(s, { immediate: true })
+
+    const text = exportBackup()
+    localStorage.clear(); __resetStorage()
+    expect(load().arcade).toEqual({})
+
+    expect(importBackup(text).ok).toBe(true)
+    expect(load().arcade['addition.core'].best).toBe(14)
+  })
+})

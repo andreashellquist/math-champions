@@ -11,6 +11,8 @@ import Player from './Player'
 import Goal from './Goal'
 import Confetti from './Confetti'
 import HintCard from './HintCard'
+import SeasonalDecoration from './SeasonalDecoration'
+import { resolveTheme } from '../game/theme'
 
 /**
  * Beats, in ms.
@@ -34,6 +36,14 @@ const BEATS = {
   nextTimeout: 1250,  // longer copy, and a retake needs understanding
   nextReveal:  1400,  // the one beat genuinely worth keeping long
   skipFloor:   250,   // below this, a stage tap is the answer tap bouncing
+  // Snabbskott (arcade): near-zero by design — the whole point is throughput.
+  // A miss still holds the correct answer for a beat, per pedagogy review: an
+  // unsignalled wrong answer that recurs later in the same run is how a wrong
+  // association gets built, so it isn't kindness being dropped, it's error
+  // correction.
+  arcadeFlight: 90,
+  arcadeHit:    250,
+  arcadeMiss:   500,
 }
 
 const prefersReducedMotion = () =>
@@ -68,29 +78,44 @@ export default function GameScreen() {
   useEffect(() => clearTimers, [clearTimers])
 
   const shootout = r?.mode === 'shootout' && !r?.clockOff
+  const arcade = r?.mode === 'arcade'
   const reduced = prefersReducedMotion()
 
-  /* ── Clock (shootout only) ─────────────────────────────── */
+  /* ── Clock (shootout: per-kick. arcade: one clock for the whole round) ── */
 
   const onExpire = useCallback(() => {
     sfx.whistleFlat()
     dispatch({ type: 'TIMEOUT' })
   }, [dispatch])
 
+  /* The Snabbskott clock never ends anything by itself — it marks the round
+     and the whistle still lets whatever item is showing be finished. See
+     ARCADE_EXPIRE in the reducer. */
+  const onArcadeExpire = useCallback(() => {
+    sfx.whistleFlat()
+    dispatch({ type: 'ARCADE_EXPIRE' })
+  }, [dispatch])
+
   const { barRef, secondsLeft, paused, resume, extend } = useDeadline({
-    durationMs: shootout && r?.phase === 'asking' && !r?.timedOut ? r.timerMs : null,
-    running: r?.phase === 'asking' && !r?.timedOut,
-    onExpire,
-    generation: r?.kickIdx ?? 0,
+    durationMs: arcade ? r.timerMs : (shootout && r?.phase === 'asking' && !r?.timedOut ? r.timerMs : null),
+    // Shootout pauses its clock between kicks (the rebound is never timed).
+    // Arcade runs one continuous clock for the whole round — pausing it
+    // between items would make the score depend on the resolve/celebrate
+    // beat length rather than on the child.
+    running: arcade || (shootout && r?.phase === 'asking' && !r?.timedOut),
+    onExpire: arcade ? onArcadeExpire : onExpire,
+    generation: arcade ? 'arcade' : (r?.kickIdx ?? 0),
   })
 
-  /* Two discrete urgency marks rather than a per-second tick */
+  /* Two discrete urgency marks rather than a per-second tick. Arcade skips the
+     tone (the item beats are already a steady stream of clicks/thuds) but
+     keeps the same non-red visual ramp. */
   useEffect(() => {
-    if (!shootout || secondsLeft == null || !r?.timerMs) { setUrgency(0); return }
+    if (!(shootout || arcade) || secondsLeft == null || !r?.timerMs) { setUrgency(0); return }
     const frac = (secondsLeft * 1000) / r.timerMs
-    if (frac <= 0.2 && urgency < 2) { setUrgency(2); sfx.urgent2() }
-    else if (frac <= 0.4 && urgency < 1) { setUrgency(1); sfx.urgent1() }
-  }, [secondsLeft, shootout, r?.timerMs, urgency])
+    if (frac <= 0.2 && urgency < 2) { setUrgency(2); if (!arcade) sfx.urgent2() }
+    else if (frac <= 0.4 && urgency < 1) { setUrgency(1); if (!arcade) sfx.urgent1() }
+  }, [secondsLeft, shootout, arcade, r?.timerMs, urgency])
 
   useEffect(() => { setUrgency(0); extendedRef.current = false; setTyped('') }, [r?.kickIdx])
 
@@ -115,6 +140,21 @@ export default function GameScreen() {
 
     const scored = r.results[r.results.length - 1] !== 'miss'
     const timedOut = r.timedOut
+
+    if (r.mode === 'arcade') {
+      // Near-zero beats and quiet sfx by design: the point is throughput, and
+      // the big goal fanfare + confetti eighteen times a minute would be
+      // sensory overload competing with the next prompt. The full celebration
+      // is saved for a new personal best, on the result screen.
+      schedule(() => {
+        if (scored) sfx.click(); else sfx.thud()
+        dispatch({ type: 'CELEBRATE' })
+      }, reduced ? 80 : BEATS.arcadeFlight)
+      schedule(advance, reduced ? 250 : (scored ? BEATS.arcadeHit : BEATS.arcadeMiss))
+      skipArmedAt.current = null   // pace is already fast; tap-to-skip would only misfire
+      return
+    }
+
     const flight = reduced ? 120 : BEATS.resolve
 
     schedule(() => {
@@ -234,9 +274,24 @@ export default function GameScreen() {
     : 'ball'
 
   const feedback = buildFeedback(r)
-  const skippable = phase === 'resolving' || phase === 'celebrating'
+  // Arcade's beats are already close to the skip floor, so tap-to-skip is
+  // never armed for it (see the resolution effect) — don't advertise an
+  // affordance that would silently do nothing.
+  const skippable = (phase === 'resolving' || phase === 'celebrating') && r.mode !== 'arcade'
 
   function answerState(opt) {
+    // Arcade never enters `reveal`/`rebound` — a miss still resolves through
+    // `resolving`/`celebrating`, so it needs its own check here, or the
+    // generic "chosen === correct" rule below would paint the child's WRONG
+    // tap green just because it was the one they chose.
+    if (r.mode === 'arcade') {
+      if (!r.arcadeMiss) {
+        return (phase === 'resolving' || phase === 'celebrating') && opt === r.chosen ? 'correct' : ''
+      }
+      if (opt === question.ans) return 'reveal'
+      if (opt === r.chosen) return 'spent'
+      return 'dim'
+    }
     if (phase === 'reveal' && opt === question.ans) return 'reveal'
     if (r.disabled.includes(opt)) return 'spent'
     if (phase === 'reveal' || r.timedOut) return 'dim'
@@ -252,19 +307,29 @@ export default function GameScreen() {
           {OPS[r.op].icon}
           {r.mode === 'fixture' && <em className="derby-tag">vs {t(rival.nameKey)}</em>}
         </span>
-        <div
-          className="kick-dots"
-          role="img"
-          aria-label={t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
-        >
-          {r.mode !== 'gate' && Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
-            <div
-              key={i}
-              className={`dot ${r.results[i] ?? ''}${i === r.kickIdx ? ' current' : ''}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        {/* Arcade's queue is a hundred-odd tiled items long — dots would be
+            noise. A live count is the only progress marker that means
+            anything when the clock, not the queue, ends the round. */}
+        {arcade && (
+          <span className="arcade-score" aria-live="polite">
+            {t('arcade.liveScore', { n: r.goals })}
+          </span>
+        )}
+        {!arcade && (
+          <div
+            className="kick-dots"
+            role="img"
+            aria-label={t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
+          >
+            {r.mode !== 'gate' && Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
+              <div
+                key={i}
+                className={`dot ${r.results[i] ?? ''}${i === r.kickIdx ? ' current' : ''}`}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+        )}
         {/* A gate must be bounded and visible — 20 dots would be unreadable, so
             it gets the counter that normal rounds no longer need. */}
         {r.mode === 'gate' && (
@@ -280,9 +345,12 @@ export default function GameScreen() {
         tabIndex={skippable ? 0 : undefined}
         aria-label={skippable ? t('game.tapNext') : undefined}
       >
-        {/* The clock is tappable: adding time was keyboard-only, so on a tablet
-            the only option was removing the clock entirely — an all-or-nothing
-            choice where a graded one already existed in the code. */}
+        {/* The clock is tappable in Shootout: adding time was keyboard-only,
+            so on a tablet the only option was removing the clock entirely —
+            an all-or-nothing choice where a graded one already existed in the
+            code. Arcade's clock is not tappable: it's a fixed, published
+            duration, and "extending" a throughput score is incoherent — the
+            whole point is that it's the same 30 seconds every time. */}
         {shootout && (
           <button
             className="shot-clock"
@@ -293,8 +361,14 @@ export default function GameScreen() {
             <div className="shot-clock-fill" ref={barRef} />
           </button>
         )}
+        {arcade && (
+          <div className="shot-clock" data-urgency={urgency} aria-hidden="true">
+            <div className="shot-clock-fill" ref={barRef} />
+          </div>
+        )}
 
         <div className="pitch-scene">
+          <SeasonalDecoration theme={resolveTheme(state.settings.pitchTheme)} />
           <div className="kicker-wrap">
             <Player
               id={state.settings.character}
@@ -328,15 +402,19 @@ export default function GameScreen() {
       {/* Reserved height so the answer buttons never shift when a hint appears.
           Costs ~96px on every kick; a tap target that moves mid-question is
           worse for everyone, and much worse with poor motor inhibition. */}
-      <div className="hint-slot">
-        {r.hint
-          ? <HintCard hint={r.hint} diagnosis={phase === 'reveal' ? r.diagnosis : null} />
-          : phase === 'asking' && (
-              <button className="link-btn" onClick={() => dispatch({ type: 'SHOW_HINT' })}>
-                {t('game.showTrick')}
-              </button>
-            )}
-      </div>
+      {/* No hint mechanism in arcade — there's no time to read one, and the
+          same fact simply comes round again later in the run. */}
+      {!arcade && (
+        <div className="hint-slot">
+          {r.hint
+            ? <HintCard hint={r.hint} diagnosis={phase === 'reveal' ? r.diagnosis : null} />
+            : phase === 'asking' && (
+                <button className="link-btn" onClick={() => dispatch({ type: 'SHOW_HINT' })}>
+                  {t('game.showTrick')}
+                </button>
+              )}
+        </div>
+      )}
 
       {question.format === 'entry' ? (
         <div className="entry">
@@ -421,6 +499,14 @@ export default function GameScreen() {
 
 function buildFeedback(r) {
   const last = r.results.at(-1)
+
+  if (r.mode === 'arcade') {
+    // At this pace a per-item line would be unreadable, and would be gone
+    // before it could be — so arcade stays silent except for the one line
+    // that matters: a heads-up before the last ball, never a jarring cut.
+    if (r.arcadeExpiring && r.phase === 'asking') return { type: 'timeout', text: t('arcade.lastBall') }
+    return { type: '', text: '' }
+  }
 
   if (r.phase === 'rebound') return { type: 'rebound', text: t('game.parried') }
   if (r.phase === 'reveal')  return { type: 'reveal',  text: t('game.reveal', { ans: r.question.ans }) }
