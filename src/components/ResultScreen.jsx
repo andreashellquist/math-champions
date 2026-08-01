@@ -2,7 +2,7 @@ import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { ratingFor } from '../game/config'
 import { computeTimeLimit } from '../hooks/useDeadline'
-import { masteredCount } from '../game/mastery'
+import { masteredCount, labelForKey, GATE_PASS } from '../game/mastery'
 import Player from './Player'
 import Confetti from './Confetti'
 
@@ -20,6 +20,8 @@ export default function ResultScreen() {
   const manyTimeouts = r.timeouts >= 3
 
   const stoppedEarly = r.stoppedEarly || r.results.length < (r.totalKicks ?? 5)
+  // Named, so "work on these" is actionable rather than a score
+  const missedLabels = [...new Set(r.missedKeys ?? [])].slice(0, 6).map(labelForKey)
 
   const replay = () => {
     const timerMs = r.mode === 'shootout' && !r.clockOff
@@ -28,6 +30,14 @@ export default function ResultScreen() {
     // After a hard round, make the next commitment a small one. Task
     // initiation is priced by the perceived size of the commitment.
     const kicks = goals <= 3 ? 3 : (r.totalKicks ?? 5)
+
+    // Never repeat a gate from its own result screen: an immediate retry
+    // teaches cramming and manufactures a false pass. "Next round" after a
+    // gate means ordinary practice on the same operation.
+    if (r.mode === 'gate') {
+      startRound(r.op, { mode: 'training', kicks: 5 })
+      return
+    }
     startRound(r.op, { mode: r.clockOff ? 'training' : r.mode, timerMs, kicks })
   }
 
@@ -47,7 +57,29 @@ export default function ResultScreen() {
           <Player id={state.settings.character} pose={goals >= 3 ? 'celebrate' : 'idle'} size={92} />
         </div>
 
-        {stoppedEarly ? (
+        {r.mode === 'gate' ? (
+          <>
+            {/* No pass/fail stamp, no grade, no stars. The headline is which
+                facts were identified, not the score. */}
+            <h2 className="result-title">
+              {goals >= GATE_PASS
+                ? t('gate.passed', { comp: t(`season.comp.${r.gateId}`) })
+                : t('gate.notYet')}
+            </h2>
+            <div className="result-score">{goals}/{r.results.length}</div>
+            <p className="result-msg">
+              {goals >= GATE_PASS
+                ? t('gate.passedMsg')
+                : t('gate.notYetMsg', { n: r.results.length - goals })}
+            </p>
+            {missedLabels.length > 0 && (
+              <ul className="gate-missed">
+                {missedLabels.map(l => <li key={l}>{l}</li>)}
+              </ul>
+            )}
+            {goals < GATE_PASS && <p className="result-footnote">{t('gate.again')}</p>}
+          </>
+        ) : stoppedEarly ? (
           <>
             <div className="result-score">{goals} ⚽</div>
             <p className="result-msg">{t('result.stoppedEarly', { n: r.results.length })}</p>

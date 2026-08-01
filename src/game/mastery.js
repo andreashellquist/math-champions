@@ -18,7 +18,7 @@ import {
 } from './facts'
 import { rng as defaultRng } from './rng'
 
-export const STATE_VERSION = 4
+export const STATE_VERSION = 5
 
 /** Items (not seconds) before a fact is due again, per box */
 const BOX_GAP = [0, 3, 8, 20, 45, 100]
@@ -64,6 +64,7 @@ export function emptyState() {
     l: [],                                                  // recent first-attempt latencies, ms
     agg: { correct: 0, goals: 0, seen: 0, rounds: 0, bestStreak: 0 },
     rivalry: emptyRivalry(),
+    gates: emptyGates(),
   }
 }
 
@@ -147,6 +148,111 @@ export function applyFixtureResult(state, { rivalId, goals, at = Date.now() }) {
 export const tieWins = (state, rivalId) => state.rivalry?.wins?.[rivalId] ?? 0
 export const headToHead = (state, rivalId) => state.rivalry?.h2h?.[rivalId] ?? [0, 0]
 
+/* ── UTTAGNINGEN — the challenge gates ─────────────────────────
+   A gate **certifies, it never filters.** Nothing here may withhold an
+   operation, a format, a character or a competition, whatever the result:
+   the child who fails a gate would then get *less* variety and more of the
+   thing they already find hard, which inverts the whole pedagogy.
+
+   So a gate awards an insignia and nothing else, and every field below is
+   additive. There is no path that lowers a box, a count or a ledger.
+   ─────────────────────────────────────────────────────────── */
+
+export const GATE_SIZE = 20
+/** 17 of 20. Matches the accuracy the gate is only offered at. */
+export const GATE_PASS = 17
+/** Only offered when the model expects this much of a margin */
+const GATE_OFFER_ACC = 0.85
+const GATE_OFFER_MASTERED = 12
+
+export const GATES = COMPETITIONS.map(c => ({ id: c.id, op: c.op }))
+
+export function emptyGates() {
+  return {}
+}
+
+/**
+ * Is this gate worth offering?
+ *
+ * A gate you are offered is a gate you are expected to pass — surprise
+ * assessment is the thing that makes gates feel punitive. Predicted score is
+ * just recent first-try accuracy over the gate length; we offer when that
+ * clears the pass mark with room to spare.
+ */
+export function gateReadiness(state, gateId) {
+  const gate = GATES.find(g => g.id === gateId)
+  if (!gate) return { ready: false, predicted: 0, solid: 0 }
+
+  const acc = recentAccuracy(state, gate.op)
+  const solid = (STRANDS_BY_OP[gate.op] ?? [])
+    .flatMap(st => st.facts)
+    .filter(f => (state.f[f.key]?.[0] ?? 0) >= MASTERED_BOX)
+    .length
+
+  const predicted = acc === null ? 0 : Math.round(acc * GATE_SIZE)
+  const attempted = state.gates?.[gateId]
+  // Retry only after an intervening session — an immediate retry teaches
+  // cramming and manufactures a false pass.
+  const restedSince = !attempted || attempted.passed ||
+    (state.agg.rounds - (attempted.atRound ?? 0)) >= 1
+
+  return {
+    ready: acc !== null && acc >= GATE_OFFER_ACC && solid >= GATE_OFFER_MASTERED && restedSince,
+    predicted,
+    solid,
+    passed: attempted?.passed === true,
+  }
+}
+
+/** Twenty items drawn from what the child has actually met, hardest last */
+export function composeGate(state, op, { size = GATE_SIZE, rng: r = defaultRng } = {}) {
+  const pool = (STRANDS_BY_OP[op] ?? [])
+    .flatMap(st => (st.perFact ? st.facts : [sampleStrandFact(st, r)]))
+    .filter(f => isSeen(state, f) && divisionReady(state, f))
+
+  const source = pool.length >= size ? pool : candidatePool(state, op, r)
+  return r.shuffle(source).slice(0, size).map(f => ({ ...f, role: 'gate' }))
+}
+
+/**
+ * Record a gate attempt.
+ *
+ * Additive only. A failed gate stores the attempt and brings the missed facts
+ * forward in the queue — bringing a fact forward changes *when* it is asked,
+ * never what box it sits in, so nothing the child earned is reduced.
+ */
+export function applyGateResult(state, { gateId, score, missedKeys = [], at = Date.now() }) {
+  const passed = score >= GATE_PASS
+  const prev = state.gates?.[gateId]
+
+  const f = { ...state.f }
+  for (const key of missedKeys) {
+    if (!f[key]) continue
+    const [box, , streak, misses] = f[key]
+    // dueAt only — the box is untouched
+    f[key] = [box, state.n, streak, misses]
+  }
+
+  return {
+    ...state,
+    f,
+    gates: {
+      ...state.gates,
+      [gateId]: {
+        // Once passed, always passed. An insignia can never be revoked.
+        passed: prev?.passed === true || passed,
+        best: Math.max(prev?.best ?? 0, score),
+        attempts: (prev?.attempts ?? 0) + 1,
+        atRound: state.agg.rounds,
+        at,
+      },
+    },
+  }
+}
+
+export const gatePassed = (state, gateId) => state.gates?.[gateId]?.passed === true
+export const gatesPassed = state => Object.values(state.gates ?? {}).filter(g => g.passed).length
+
 const EMPTY_REC = [0, 0, 0, 0]
 
 export function recordFor(state, fact) {
@@ -166,7 +272,9 @@ export const isSeen = (state, fact) =>
  * @param {object} answer - { fact, correct, latencyMs, errorFamily, secondAttempt }
  * @returns {object} new state
  */
-export function applyAnswer(state, { fact, correct, latencyMs = 0, errorFamily = null, secondAttempt = false }) {
+export function applyAnswer(state, {
+  fact, correct, latencyMs = 0, errorFamily = null, secondAttempt = false, noDemote = false,
+}) {
   const key = fact.perFact ? masteryKey(fact) : fact.strand
   const bucketName = fact.perFact ? 'f' : 's'
   const [box, , streak, misses] = state[bucketName][key] ?? EMPTY_REC
@@ -181,7 +289,11 @@ export function applyAnswer(state, { fact, correct, latencyMs = 0, errorFamily =
     const newBox = promote ? Math.min(MAX_BOX, box + 1) : box
     next = [newBox, n + BOX_GAP[newBox], promote ? streak + 1 : 0, misses]
   } else {
-    const newBox = Math.max(0, box - 2)
+    // `noDemote` is the gate's asymmetric quarantine: an Uttagning may promote
+    // a fact but never demote one. Volunteering for assessment must not be able
+    // to cost a child something they had already earned, or the rational move
+    // is to never sit a gate.
+    const newBox = noDemote ? box : Math.max(0, box - 2)
     next = [newBox, n + MIN_REQUEUE_GAP, 0, misses + 1]
   }
 

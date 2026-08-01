@@ -257,7 +257,7 @@ export default function GameScreen() {
           role="img"
           aria-label={t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
         >
-          {Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
+          {r.mode !== 'gate' && Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
             <div
               key={i}
               className={`dot ${r.results[i] ?? ''}${i === r.kickIdx ? ' current' : ''}`}
@@ -265,6 +265,11 @@ export default function GameScreen() {
             />
           ))}
         </div>
+        {/* A gate must be bounded and visible — 20 dots would be unreadable, so
+            it gets the counter that normal rounds no longer need. */}
+        {r.mode === 'gate' && (
+          <span>{t('gate.progress', { n: r.kickIdx + 1, total: totalKicks })}</span>
+        )}
       </div>
 
       {/* Pitch */}

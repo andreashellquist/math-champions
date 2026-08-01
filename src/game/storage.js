@@ -13,7 +13,8 @@
  * session, never a white screen.
  */
 import {
-  emptyState, emptyRivalry, STATE_VERSION, OP_KEYS, COMPETITIONS, TIE_TARGET,
+  emptyState, emptyRivalry, emptyGates, STATE_VERSION, OP_KEYS, COMPETITIONS,
+  TIE_TARGET, GATES, GATE_SIZE,
 } from './mastery'
 import { RIVAL_IDS } from './rivals'
 
@@ -113,6 +114,7 @@ export function sanitize(raw) {
     },
     l: Array.isArray(raw.l) ? raw.l.map(x => int(x, 0, 60000)).slice(-30) : [],
     rivalry: cleanRivalry(raw.rivalry),
+    gates: cleanGates(raw.gates),
   }
 }
 
@@ -148,6 +150,24 @@ function cleanRivalry(raw) {
   }
 }
 
+/** Gate insignia. Bounded by the gate list, so it cannot grow with play. */
+function cleanGates(raw) {
+  const out = emptyGates()
+  if (!raw || typeof raw !== 'object') return out
+  for (const g of GATES) {
+    const rec = raw[g.id]
+    if (!rec || typeof rec !== 'object') continue
+    out[g.id] = {
+      passed: rec.passed === true,
+      best: int(rec.best, 0, GATE_SIZE),
+      attempts: int(rec.attempts, 0, 9999),
+      atRound: int(rec.atRound, 0, 1e9),
+      at: int(rec.at, 0, Number.MAX_SAFE_INTEGER),
+    }
+  }
+  return out
+}
+
 /* ── MIGRATIONS ────────────────────────────────────────────── */
 
 /** The original two flat keys. Preserve the child's totals; mastery starts fresh. */
@@ -168,6 +188,8 @@ const MIGRATIONS = {
   // v4 starts recording first-attempt latencies. Empty is correct: the clock
   // falls back to the generous defaults until there is real evidence.
   3: prev => ({ ...prev, v: 4, l: [] }),
+  // v5 adds the gate ledger. Empty is correct — no gate has been sat yet.
+  4: prev => ({ ...prev, v: 5, gates: emptyGates() }),
 }
 
 /* ── PUBLIC API ────────────────────────────────────────────── */

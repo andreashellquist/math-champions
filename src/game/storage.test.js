@@ -124,15 +124,16 @@ describe('flush', () => {
 })
 
 describe('latency ring (v4)', () => {
-  it('migrates a v3 save and starts recording latencies empty', () => {
+  it('migrates an old save all the way forward, keeping everything earned', () => {
     __resetStorage()
     localStorage.clear()
     localStorage.setItem('mc_state', JSON.stringify({
       v: 3, n: 50, f: { 'a3.4': [2, 5, 1, 0] }, rivalry: { season: 2, stage: 1 },
     }))
     const s = load()
-    expect(s.v).toBe(4)
+    expect(s.v).toBe(emptyState().v)            // current version, whatever it is
     expect(s.l).toEqual([])
+    expect(s.gates).toEqual({})
     expect(s.f['a3.4']).toEqual([2, 5, 1, 0])   // mastery untouched
     expect(s.rivalry.season).toBe(2)            // season untouched
   })

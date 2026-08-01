@@ -5,7 +5,7 @@
  * reducer that isn't pure can't be tested or replayed.
  */
 import {
-  composeRound, composeFixture, composeMixed, mixedReady,
+  composeRound, composeFixture, composeMixed, composeGate, mixedReady,
   boxOf, optionCountFor, isFatiguing, recentAccuracy, masteredCount,
 } from './mastery'
 import { OP_ORDER } from './config'
@@ -17,6 +17,7 @@ export const ROUND_SIZE = 5
 /** Choose the facts for a round: warm-up, review, review, struggle, new */
 export function buildRoundQueue(mastery, op, { size = ROUND_SIZE, mode = 'training', rng = defaultRng } = {}) {
   // In a fixture the rival picks the questions — see composeFixture
+  if (mode === 'gate') return composeGate(mastery, op, { size, rng })
   if (mode === 'fixture') return composeFixture(mastery, op, { size, rng })
   if (mode === 'mixed') {
     const ops = mixedReady(mastery, OP_ORDER) ?? [op]

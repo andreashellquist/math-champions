@@ -169,6 +169,29 @@ cap teaches that engaging deeply gets you cut off. Instead fatigue degrades what
 the next round *contains*, and `one more` / `done for today` get equal weight
 after a long sitting.
 
+## Uttagningen — the challenge gates
+
+Twenty questions, untimed, one per competition. It **certifies and never
+filters**: passing awards an insignia, failing awards a list of facts to work
+on, and neither outcome changes what the child can reach. A gate that locked an
+operation would mean the child who fails then gets *less* variety and more of
+what they already find hard, which inverts the whole design.
+
+Three properties make it safe to offer:
+
+- It is only offered when the model expects a comfortable pass, and the
+  prediction is shown up front. A gate you are offered is one you are expected
+  to pass; surprise assessment is what makes gates feel punitive.
+- **Sitting one is free.** A gate may promote a mastery box but never demote
+  one — the same asymmetric quarantine the Shootout clock uses. Otherwise
+  volunteering for assessment is a gamble, and the rational move is never to
+  sit one.
+- Failure is a diagnosis, not a verdict: no pass/fail stamp, no stars, no grade.
+  The headline is which facts got away, and they go to the front of the queue.
+
+An insignia, once earned, cannot be revoked — later attempts can only raise the
+best score.
+
 ## For grown-ups
 
 `?parent=1` shows what is actually happening: facts known straight away,
@@ -198,7 +221,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-183 tests. The valuable ones are property-based: every hint is checked for
+205 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to

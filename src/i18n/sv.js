@@ -252,6 +252,20 @@ export default {
     },
   },
 
+  gate: {
+    title: "Uttagningen — {comp}",
+    blurb: "{n} frågor, ingen klocka. {pass} rätt ger märket.",
+    readiness: "Med din nivå just nu brukar det bli runt {predicted} av {total}.",
+    start: "Kör uttagningen",
+    progress: "Fråga {n} av {total}",
+    passed: "🎖️ Uttagen till {comp}!",
+    passedMsg: "Märket är ditt. Det kan inte tas ifrån dig.",
+    notYet: "Bra kämpat",
+    notYetMsg: "{n} gled undan. De ligger först i kön nästa gång — allt annat är kvar precis som det var.",
+    badge: "Märken",
+    again: "Du kan göra om den nästa gång du spelar.",
+  },
+
   unlock: '🔓 {icon} {name} upplåst!',
 
   /* ── KNEP ───────────────────────────────────────────────── */

@@ -150,3 +150,18 @@ describe('screen load', () => {
     expect(document.querySelectorAll('.dot.current').length).toBe(1)
   })
 })
+
+describe('a gate is not repeatable from its own result screen', () => {
+  it('offers ordinary practice rather than another attempt', async () => {
+    const { reducer, initialState } = await import('../state/reducer')
+    const { emptyState } = await import('../game/mastery')
+    // The reducer keeps the gate id on the round, and ResultScreen's replay
+    // deliberately drops it — an immediate retry teaches cramming.
+    const s = reducer(initialState(emptyState()), {
+      type: 'START_ROUND', op: 'addition', mode: 'gate', gateId: 'cup',
+      queue: [], fact: null, question: null, startedAt: 0, totalKicks: 20,
+    })
+    expect(s.round.gateId).toBe('cup')
+    expect(s.round.mode).toBe('gate')
+  })
+})

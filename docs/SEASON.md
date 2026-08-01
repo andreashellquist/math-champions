@@ -325,9 +325,11 @@ What to do instead:
 - [x] Fatigue degrades content rather than access (`isFatiguing`)
 - [x] `STATE_VERSION` 4 — first-attempt latency ring, so the Shootout clock
       derives from the child rather than from content mastery
-- [ ] **Uttagningen gates** — the last substantial piece. Certify, never block;
-      untimed; only offered at ≥85% predicted pass; failure reported as
-      diagnosis with the missed facts queued first.
+- [x] **Uttagningen gates** — certify, never block; untimed; only offered at
+      ≥85% predicted pass; failure reported as diagnosis with the missed facts
+      queued first. Sitting one is also *free*: a gate may promote a box but
+      never demote one, so volunteering for assessment can never cost the child
+      something they had already earned.
 - [x] Sudden death on a 5/5 Shootout — earned by a perfect round, never a
       tiebreak, ends on the first non-goal, capped at +10
 - [x] Flourish bias per rival, `clockScale` floored at 0.8 and ignored entirely

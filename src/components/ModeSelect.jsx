@@ -1,7 +1,10 @@
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
 import { OPS, OP_ORDER, opName } from '../game/config'
-import { recentAccuracy, opProgress, MASTERED_BOX, mixedReady } from '../game/mastery'
+import {
+  recentAccuracy, opProgress, MASTERED_BOX, mixedReady,
+  currentCompetition, gateReadiness, gatePassed, GATE_SIZE, GATE_PASS,
+} from '../game/mastery'
 import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
 import { clockScaleFor } from '../game/rivals'
@@ -32,6 +35,14 @@ export default function ModeSelect() {
   // The rival draws from facts the child has actually met
   const derbyReady = (mastery.r[state.selectedOp] ?? []).length >= 10
   const mixedOps = mixedReady(mastery, OP_ORDER)
+
+  // The gate for the competition currently in play, if it is worth offering
+  const gate = (() => {
+    const comp = currentCompetition(mastery)
+    if (!comp || gatePassed(mastery, comp.id)) return null
+    const readiness = gateReadiness(mastery, comp.id)
+    return readiness.ready ? { ...comp, readiness } : null
+  })()
 
   const play = (op, mode) => {
     const timerMs = mode === 'shootout' || mode === 'fixture'
@@ -108,6 +119,22 @@ export default function ModeSelect() {
             ))}
           </ul>
         </>
+      )}
+
+      {/* Uttagningen. Offered only when the model expects a pass, and it never
+          withholds anything — passing awards an insignia, failing awards a list
+          of facts to work on. */}
+      {gate && (
+        <div className="gate-offer">
+          <b>{t('gate.title', { comp: t(`season.comp.${gate.id}`) })}</b>
+          <span>{t('gate.blurb', { n: GATE_SIZE, pass: GATE_PASS })}</span>
+          <span className="gate-ready">
+            {t('gate.readiness', { predicted: gate.readiness.predicted, total: GATE_SIZE })}
+          </span>
+          <button className="btn btn-gold" onClick={() => startRound(gate.op, { mode: 'gate', kicks: GATE_SIZE, gateId: gate.id })}>
+            {t('gate.start')}
+          </button>
+        </div>
       )}
 
       {mixedOps && (

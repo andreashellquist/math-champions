@@ -244,6 +244,20 @@ export default {
     },
   },
 
+  gate: {
+    title: "The Trial — {comp}",
+    blurb: "{n} questions, no clock. {pass} right earns the badge.",
+    readiness: "At your level right now this usually comes out around {predicted} of {total}.",
+    start: "Start the trial",
+    progress: "Question {n} of {total}",
+    passed: "🎖️ Selected for {comp}!",
+    passedMsg: "The badge is yours. It can never be taken away.",
+    notYet: "Good effort",
+    notYetMsg: "{n} got away. They are first in the queue next time — everything else stays exactly as it was.",
+    badge: "Badges",
+    again: "You can take it again next time you play.",
+  },
+
   unlock: '🔓 {icon} {name} unlocked!',
 
   /* ── HINTS ──────────────────────────────────────────────── */

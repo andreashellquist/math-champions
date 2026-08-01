@@ -15,7 +15,9 @@ import { OPS, OP_ORDER, opName } from '../game/config'
 import { t } from '../i18n'
 import { getHint } from '../game/hints'
 import { classifyChoice } from '../game/distractors'
-import { applyAnswer, emptyState, MIN_REQUEUE_GAP, applyFixtureResult } from '../game/mastery'
+import {
+  applyAnswer, emptyState, MIN_REQUEUE_GAP, applyFixtureResult, applyGateResult,
+} from '../game/mastery'
 
 export const TOTAL_KICKS = 5
 /** Bonus kicks a perfect Shootout can earn. Additive only — never a tiebreak. */
@@ -64,6 +66,7 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
   const mastery = applyAnswer(state.mastery, {
     fact: r.fact, correct: false, latencyMs: 0,
     errorFamily: diagnosis?.family ?? null,
+    noDemote: r.mode === 'gate',
   })
   const demotedTo = (r.fact.perFact ? mastery.f : mastery.s)[
     r.fact.perFact ? r.fact.key : r.fact.strand
@@ -89,6 +92,7 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
       streak: 0,
       brainPoints: r.brainPoints + 1,
       results: [...r.results, 'miss'],
+      missedKeys: [...(r.missedKeys ?? []), r.fact.key],
       diagnosis,
       requeued: requeue,
       demotedTo,
@@ -129,6 +133,8 @@ export function reducer(state, action) {
         round: {
           op: action.op,
           mode: action.mode ?? 'training',
+          gateId: action.gateId ?? null,
+          missedKeys: [],
           totalKicks: action.totalKicks ?? TOTAL_KICKS,
           queue: action.queue ?? [],
           kickIdx: 0,
@@ -328,6 +334,17 @@ export function reducer(state, action) {
       if (done || !action.question) {
         let mastery = { ...state.mastery, agg: { ...state.mastery.agg, rounds: state.mastery.agg.rounds + 1 } }
         let tieWon = null, seasonWon = null
+
+        // A gate certifies and nothing more. It cannot withhold anything, so
+        // there is no branch here that changes what is available.
+        if (r.mode === 'gate' && r.gateId) {
+          mastery = applyGateResult(mastery, {
+            gateId: r.gateId,
+            score: r.goals,
+            missedKeys: r.missedKeys ?? [],
+            at: action.at ?? Date.now(),
+          })
+        }
 
         // Only a derby counts toward a tie. Falling short increments `played`
         // and nothing else — nothing here can reduce what the child has earned.
