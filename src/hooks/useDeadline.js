@@ -48,6 +48,7 @@ export function useDeadline({ durationMs, running, onExpire, onAutoPause, genera
     el.style.animationPlayState = pausedAtRef.current === null ? 'running' : 'paused'
   }, [durationMs, remainingMs])
 
+  const scheduleRef = useRef(null)
   const schedule = useCallback(() => {
     clearTimer()
     const left = remainingMs()
@@ -56,12 +57,16 @@ export function useDeadline({ durationMs, running, onExpire, onAutoPause, genera
       // Re-check rather than trust the timer: background throttling can fire
       // this late, and a pause may have happened in between.
       const stillLeft = remainingMs()
-      if (stillLeft > 20) { schedule(); return }
+      if (stillLeft > 20) { scheduleRef.current?.(); return }
       if (firedRef.current === generation) return
       firedRef.current = generation
       onExpire?.()
     }, left)
   }, [remainingMs, onExpire, generation])
+
+  // Assigned in an effect, not during render. The self-reference exists so the
+  // timeout can reschedule itself after a background-throttled late fire.
+  useEffect(() => { scheduleRef.current = schedule }, [schedule])
 
   /* Arm a fresh deadline whenever the question changes */
   useEffect(() => {

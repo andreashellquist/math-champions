@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { getHint, hintRule } from './hints'
 import { setLocale, LOCALES } from '../i18n'
 
-const OPS = ['addition', 'subtraction', 'multiplication', 'division']
 const LOCALE_CODES = Object.keys(LOCALES)
 
 /** Every (op, a, b) the game can realistically produce */

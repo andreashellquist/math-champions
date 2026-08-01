@@ -4,6 +4,10 @@
  * Stylised cartoon avatars identified by kit colour, hair silhouette and
  * number — recognisable by team and vibe, not likenesses of real people.
  *
+ * The roster is deliberately mixed: five men and nothing else gives roughly
+ * half the audience nobody to be, and identification is one of the few
+ * motivational levers here that costs nothing to provide.
+ *
  * Every character is available from the first launch and freely swappable.
  * Characters are deliberately NOT unlockable: who you get to be should never
  * be something a child has to earn, and a locked favourite is a small negative
@@ -101,6 +105,33 @@ export const CHARACTERS = {
     },
     // #FF7A1A measured 2.05:1 against the pitch; #FFB84D clears 3:1
     gk: { ...GK_DEFAULT, shirt: '#FFB84D', socks: '#FFB84D', gloves: '#005293' },
+  },
+  bonmati: {
+    id: 'bonmati', name: 'Aitana Bonmatí', short: 'Aitana', flag: '🇪🇸',
+    hair: 'flow', hairColor: '#3A2A1C', skin: '#E8C4A0',
+    number: 14, celebration: 'arms-wide', breathe: 3.1,
+    kits: {
+      // Barça claret measures ~1.0:1 against the pitch, so it rides on the
+      // stripes and trim while the shirt itself stays legible.
+      home:   { shirt: '#F2E8D5', accent: '#C81B5A', pattern: 'stripes',
+                shorts: '#004D98', socks: '#C81B5A', trim: '#004D98', numberColor: '#004D98' },
+      nation: { shirt: '#FFD9E2', accent: '#C60B1E', pattern: 'solid',
+                shorts: '#1A2A6C', socks: '#C60B1E', trim: '#C60B1E', numberColor: '#1A2A6C' },
+    },
+    gk: GK_DEFAULT,
+  },
+
+  rolfo: {
+    id: 'rolfo', name: 'Fridolina Rolfö', short: 'Fridolina', flag: '🇸🇪',
+    hair: 'crop', hairColor: '#C9A227', skin: '#F0D0B4',
+    number: 8, celebration: 'point', breathe: 3.4,
+    kits: {
+      home:   { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: { ...GK_DEFAULT, shirt: '#B9F73E', socks: '#B9F73E' },
   },
 }
 

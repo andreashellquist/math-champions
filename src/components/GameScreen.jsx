@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useGame } from '../state/GameContext'
-import { OPS, opName } from '../game/config'
+import { OPS } from '../game/config'
 import { boxName } from '../game/mastery'
 import { t } from '../i18n'
 import { useTranslation } from '../i18n/useTranslation'

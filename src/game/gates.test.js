@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   emptyState, applyAnswer, applyGateResult, gateReadiness, gatePassed, gatesPassed,
   composeGate, composeRound, openStrands, optionCountFor, masteredCount,
-  recentAccuracy, mixedReady, currentCompetition, isFatiguing,
+  recentAccuracy, mixedReady, currentCompetition,
   GATES, GATE_SIZE, GATE_PASS, OP_KEYS,
 } from './mastery'
 import { pickFormat } from './questions'

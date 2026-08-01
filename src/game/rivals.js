@@ -108,6 +108,8 @@ const DEFAULT_RIVAL = {
   bellingham: 'blaugrana',   // El Clásico, other way round
   kane:       'gunner',      // North London
   gyokeres:   'dynamite',    // Sweden–Denmark
+  bonmati:    'white_wall',  // El Clásico
+  rolfo:      'dynamite',    // Sweden–Denmark
 }
 
 export const RIVAL_IDS = Object.keys(RIVALS)

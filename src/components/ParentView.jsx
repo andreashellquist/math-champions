@@ -7,6 +7,8 @@ import {
 } from '../game/mastery'
 import { getHint } from '../game/hints'
 import { getRival } from '../game/rivals'
+import { exportBackup, importBackup } from '../game/storage'
+import { useRef, useState } from 'react'
 
 const OP_OF_CHAR = { a: 'addition', s: 'subtraction', m: 'multiplication', d: 'division' }
 
@@ -30,6 +32,28 @@ export default function ParentView() {
   const { state } = useGame()
   const { t } = useTranslation()
   const { mastery } = state
+
+  const fileRef = useRef(null)
+  const [status, setStatus] = useState(null)
+
+  function download() {
+    const blob = new Blob([exportBackup()], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `mattemastarna-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setStatus('exported')
+  }
+
+  async function restore(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const result = importBackup(await file.text())
+    setStatus(result.ok ? 'imported' : result.reason)
+    if (result.ok) window.location.reload()
+  }
 
   const known = masteredCount(mastery)
   const working = workingOn(mastery, 6)
@@ -146,6 +170,27 @@ export default function ParentView() {
                 rival: t(getRival(comp?.rival)?.nameKey ?? 'rivals.red_devil'),
               })}
         </p>
+      </div>
+
+      {/* Progress lives in this browser's localStorage — there is no account
+          and no sync, so moving devices means moving the file by hand. */}
+      <div className="trophy-card" style={{ marginTop: 12 }}>
+        <div className="unlock-title">{t('parent.backup')}</div>
+        <p className="parent-line">{t('parent.backupNote')}</p>
+        <div className="result-links">
+          <button className="btn btn-white" onClick={download}>{t('parent.export')}</button>
+          <button className="btn btn-white" onClick={() => fileRef.current?.click()}>
+            {t('parent.import')}
+          </button>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={restore}
+        />
+        {status && <p className="parent-note">{t(`parent.${status}`)}</p>}
       </div>
 
       <p className="hint-note">{t('parent.footer')}</p>

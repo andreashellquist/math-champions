@@ -194,18 +194,22 @@ const MIGRATIONS = {
 
 /* ── PUBLIC API ────────────────────────────────────────────── */
 
+/** Run the migration chain up to the current version */
+function migrateForward(parsed) {
+  let s = parsed
+  while (int(s?.v, 0, 99) < STATE_VERSION && MIGRATIONS[s.v]) s = MIGRATIONS[s.v](s)
+  return s
+}
+
 export function load() {
   try {
     const raw = store().getItem(KEY)
     if (!raw) return sanitize(migrateFromLegacy() ?? emptyState())
 
-    let parsed = JSON.parse(raw)
+    const parsed = JSON.parse(raw)
     // Forward-version data means a newer build wrote this — don't guess at it
     if (int(parsed?.v, 0, 99) > STATE_VERSION) return emptyState()
-    while (int(parsed?.v, 0, 99) < STATE_VERSION && MIGRATIONS[parsed.v]) {
-      parsed = MIGRATIONS[parsed.v](parsed)
-    }
-    return sanitize(parsed)
+    return sanitize(migrateForward(parsed))
   } catch {
     return emptyState()
   }
@@ -304,6 +308,69 @@ export function loadWeek() {
 
 export function saveWeek(week) {
   try { store().setItem(WEEK_KEY, JSON.stringify(week)) } catch { /* non-fatal */ }
+}
+
+/* ── BACKUP ────────────────────────────────────────────────────
+   localStorage is per-device and per-browser: there is no sync, and clearing
+   site data loses everything. A backend would fix that properly, but it means
+   accounts and a server holding a child's learning record, which is a
+   different product decision.
+
+   This is the middle path — an export the grown-up can move by hand. Nothing
+   leaves the device unless someone chooses to move it.
+   ─────────────────────────────────────────────────────────── */
+
+export const BACKUP_VERSION = 1
+
+export function exportBackup() {
+  return JSON.stringify({
+    kind: 'math-champions-backup',
+    v: BACKUP_VERSION,
+    at: Date.now(),
+    state: load(),
+    settings: loadSettings(),
+  }, null, 2)
+}
+
+/**
+ * Restore from an exported backup.
+ *
+ * Runs the same sanitiser and migration chain as a normal load, so a backup
+ * taken from an older build is upgraded rather than trusted.
+ *
+ * @returns {{ ok: boolean, reason?: string }}
+ */
+export function importBackup(text) {
+  let parsed
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return { ok: false, reason: 'unreadable' }
+  }
+  if (parsed?.kind !== 'math-champions-backup') return { ok: false, reason: 'notBackup' }
+
+  try {
+    const state = sanitize(
+      Number(parsed.state?.v) > STATE_VERSION ? emptyState() : migrateForward(parsed.state),
+    )
+    store().setItem(KEY, JSON.stringify(state))
+    if (parsed.settings) saveSettings(loadSettingsShape(parsed.settings))
+    return { ok: true }
+  } catch {
+    return { ok: false, reason: 'unreadable' }
+  }
+}
+
+/** Shape-check imported settings the same way a normal load would */
+function loadSettingsShape(raw) {
+  return {
+    sound: raw?.sound !== false,
+    character: typeof raw?.character === 'string' ? raw.character : DEFAULT_SETTINGS.character,
+    shootoutOptIn: raw?.shootoutOptIn === true,
+    locale: typeof raw?.locale === 'string' ? raw.locale : null,
+    extraTime: Number.isFinite(raw?.extraTime) ? Math.min(2, Math.max(1, raw.extraTime)) : 1,
+    rival: typeof raw?.rival === 'string' ? raw.rival : null,
+  }
 }
 
 /** Test seam — resets the memoised backing store */

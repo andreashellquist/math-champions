@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
   load, save, flush, clear, sanitize, __resetStorage,
-  weekId, loadWeek, saveWeek,
+  weekId, loadWeek, saveWeek, exportBackup, importBackup,
 } from './storage'
 import { emptyState } from './mastery'
 
@@ -178,5 +178,60 @@ describe('weekly snapshot', () => {
     saveWeek({ id: '2026-w30', mastered: 12, shown: true })
     const w = loadWeek()
     expect(Object.keys(w).sort()).toEqual(['id', 'mastered', 'shown'])
+  })
+})
+
+describe('backup — the manual bridge between devices', () => {
+  it('round-trips a full save', () => {
+    __resetStorage(); localStorage.clear()
+    const s = { ...emptyState(), n: 99, f: { 'm7.8': [4, 10, 2, 1] },
+      agg: { ...emptyState().agg, correct: 120, goals: 130 } }
+    save(s, { immediate: true })
+
+    const text = exportBackup()
+    localStorage.clear(); __resetStorage()
+    expect(load().agg.correct).toBe(0)          // gone, as after clearing site data
+
+    expect(importBackup(text).ok).toBe(true)
+    const back = load()
+    expect(back.agg.correct).toBe(120)
+    expect(back.f['m7.8']).toEqual([4, 10, 2, 1])
+  })
+
+  it('upgrades an older backup rather than trusting it', () => {
+    const old = JSON.stringify({
+      kind: 'math-champions-backup', v: 1,
+      state: { v: 2, n: 10, f: { 'a3.4': [3, 1, 0, 0] }, agg: { correct: 7 } },
+    })
+    expect(importBackup(old).ok).toBe(true)
+    const back = load()
+    expect(back.v).toBe(emptyState().v)         // migrated forward
+    expect(back.f['a3.4']).toEqual([3, 1, 0, 0])
+    expect(back.gates).toEqual({})              // fields the old save lacked
+  })
+
+  it('refuses anything that is not one of our backups', () => {
+    expect(importBackup('not json at all').ok).toBe(false)
+    expect(importBackup('{"kind":"something-else"}').reason).toBe('notBackup')
+    expect(importBackup('[]').reason).toBe('notBackup')
+  })
+
+  it('sanitises a tampered backup instead of trusting it', () => {
+    const evil = JSON.stringify({
+      kind: 'math-champions-backup', v: 1,
+      state: { v: emptyState().v, agg: { correct: 'banana' }, f: { 'a3.4': [99, -1, 'x', 5] } },
+    })
+    expect(importBackup(evil).ok).toBe(true)
+    const back = load()
+    expect(back.agg.correct).toBe(0)
+    expect(back.f['a3.4'][0]).toBe(5)           // clamped to the max box
+  })
+
+  it('does not choke on a backup from a newer build', () => {
+    const future = JSON.stringify({
+      kind: 'math-champions-backup', v: 1, state: { v: 99, agg: { correct: 500 } },
+    })
+    expect(importBackup(future).ok).toBe(true)
+    expect(load().agg.correct).toBe(0)          // ignored rather than guessed at
   })
 })

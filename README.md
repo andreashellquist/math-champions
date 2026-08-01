@@ -13,6 +13,7 @@ npm run dev
 | `npm run dev` | dev server |
 | `npm run build` | production build (PWA, installable, works offline) |
 | `npm test` | Vitest |
+| `npm run lint` | ESLint |
 | `npm run icons` | regenerate PWA icons from `public/icon.svg` |
 | `?sheet=1` | dev-only character contact sheet |
 
@@ -221,7 +222,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-205 tests. The valuable ones are property-based: every hint is checked for
+218 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
@@ -231,20 +232,37 @@ Regression tests exist for each fixed bug, named after the bug.
 
 ---
 
+## Where progress lives
+
+Four keys in `localStorage`. `mc_state` is the save (mastery, season, gates,
+latencies) at version 5; `mc_settings` and `mc_week` survive a progress reset.
+
+Three properties are deliberate:
+
+- **Size is bounded by the fact space, not by play time.** Single-digit facts
+  get one record each; multi-digit work is tracked per *strand*, or `73 + 48`
+  would mint a record forever. Every array is a capped ring buffer.
+- **Every read is sanitised**, not just migrated ones — boxes clamped, unknown
+  keys dropped, `played` forced ≥ `won`. This exists because the original code
+  did `parseInt(raw)` with no guard, and since `NaN < 20` is false, one corrupt
+  value pinned a child to the hardest questions forever.
+- **Migrations only ever add.** There is a test asserting an old save arrives at
+  the current version with its facts and season intact.
+
+`localStorage` is **per-device and per-browser** — there is no account and no
+sync, and clearing site data loses everything. A backend would fix that properly
+but means holding a child's learning record on a server, which is a different
+product decision. The middle path is in the parent view: export a save file and
+open it on the other device. Imported saves go through the same sanitiser and
+migration chain as a normal load, so an older or tampered backup is upgraded and
+clamped rather than trusted.
+
+---
+
 ## TODO
 
-### Gameplay
-- [ ] Season structure: ties vs each rival, cup on clearing all five
-- [ ] Challenge gates ("Uttagningen") that certify but never block content
-- [ ] Mixed/interleaved rounds once two operations are unlocked
-- [ ] Free numeric entry at box ≥4 (certifies recall, not recognition)
-- [ ] Sudden death on a 5/5 Shootout
-
-### Content
-- [ ] More characters, including women players
-- [ ] A custom player the child names and kits themselves
+- [ ] A custom player the child names and kits themselves — the self-reference
+      effect is real, and it is the honest answer for a child who isn't any of
+      the seven
 - [ ] Seasonal pitch themes
-
-### Technical
-- [ ] ESLint config
-- [ ] RTL integration test for the full kick pipeline
+- [ ] Real cross-device sync, if it is ever worth the account and the server

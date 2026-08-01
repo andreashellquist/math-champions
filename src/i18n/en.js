@@ -212,6 +212,14 @@ export default {
 
   parent: {
     title: "For grown-ups",
+    backup: "Move progress",
+    backupNote: "Progress is stored in this browser — it does not follow you to another device on its own. Save a file here and open it on the other device.",
+    export: "⬇️ Save file",
+    import: "⬆️ Open file",
+    exported: "File saved.",
+    imported: "Progress loaded.",
+    unreadable: "That file could not be read.",
+    notBackup: "That does not look like a save file from this game.",
     subtitle: "What is actually happening in practice.",
     automatic: "facts known straight away",
     rounds: "rounds played",

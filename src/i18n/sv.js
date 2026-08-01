@@ -220,6 +220,14 @@ export default {
 
   parent: {
     title: "För vuxna",
+    backup: "Flytta framstegen",
+    backupNote: "Framstegen sparas i den här webbläsaren — de följer inte automatiskt med till en annan enhet. Spara en fil här och öppna den på den andra enheten.",
+    export: "⬇️ Spara fil",
+    import: "⬆️ Öppna fil",
+    exported: "Filen är sparad.",
+    imported: "Framstegen är inlästa.",
+    unreadable: "Filen gick inte att läsa.",
+    notBackup: "Det där ser inte ut som en sparfil från spelet.",
     subtitle: "Vad som faktiskt händer i träningen.",
     automatic: "tal som sitter direkt",
     rounds: "omgångar spelade",

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildQuestion, pickFormat } from './questions'
 import { pickDistractors, classifyChoice } from './distractors'
-import { ALL_FACTS, STRANDS, sampleStrandFact, answerOf, factKey } from './facts'
+import { ALL_FACTS, STRANDS, sampleStrandFact, factKey } from './facts'
 import { makeRng } from './rng'
 
 /** A representative mix: every single-digit fact plus draws from every sampled strand */
