@@ -27,22 +27,36 @@ import { getCharacter, shade } from '../game/characters'
 const TORSO = 'M45 60 Q60 55 75 60 L78 106 Q60 110 42 106 Z'
 
 /**
- * Hair silhouettes. Along with kit colour this is the identifying channel, so
- * each has to read at 72px — which means wrapping the sides of the skull, not
- * sitting on top like a cap. Built on the head circle (60, 36) r=18: an outer
- * arc over the crown, then an inner hairline that stays clear of the eyes.
+ * Hair silhouettes, built on the head circle (60, 36) r=18.
+ *
+ * The hard constraint: the **inner hairline never drops below y≈30**, so the
+ * whole face from the brow down stays skin. An earlier version used arcs wider
+ * than the skull with the hairline below the eyes, which left only a small
+ * central oval of face — every dark-haired character then read as having dark
+ * skin, which is both wrong and not ours to imply.
+ *
+ * Volume therefore grows *outward* (the afro's halo extends past the skull)
+ * rather than inward across the face.
  */
 const HAIR = {
-  buzz:  { main: 'M42 37 A18 18 0 0 0 78 37 Q76 28 60 27 Q44 28 42 37 Z' },
-  crop:  { main: 'M41 40 A19 19 0 0 0 79 40 Q79 29 71 27 Q63 34 53 31 Q45 29 41 40 Z' },
+  buzz:  { main: 'M42 36 A18 18 0 0 1 78 36 Q76 29 60 28 Q44 29 42 36 Z' },
+  crop:  { main: 'M41 38 A19 19 0 0 1 79 38 Q78 30 67 29 Q57 33 50 30 Q43 30 41 38 Z' },
   flow:  {
-    main:   'M40 43 A20 20 0 0 0 80 43 Q80 27 71 22 Q65 18 58 19 Q47 20 42 26 Q39 32 40 43 Z',
-    accent: 'M76 36 q9 6 7 17 q-3 7 -9 4 q6 -10 2 -21 Z',
+    main:   'M40 40 A20 20 0 0 1 80 40 Q79 28 70 25 Q60 23 50 25 Q41 28 40 40 Z',
+    // Hangs beside the face, never across it
+    accent: 'M77 37 q11 8 9 21 q-3 8 -10 4 q7 -12 1 -25 Z',
   },
   curls: {
-    main: 'M41 41 a10 10 0 0 1 3 -14 a11 11 0 0 1 11 -9 a11 11 0 0 1 14 1 a10 10 0 0 1 10 8 a10 10 0 0 1 3 14 q-4 -11 -13 -12 q-13 -3 -19 1 q-8 2 -9 11 Z',
+    // Volume that sits *around* the skull reads as hair; volume stacked on top
+    // of it reads as a bowl. So bulky styles get a shape drawn behind the head.
+    behind: 'M60 13 a22 21 0 0 1 22 21 a22 21 0 0 1 -3 11 q-3 -11 -10 -14 q-9 -4 -18 -2 q-9 2 -13 16 a22 21 0 0 1 -3 -11 a22 21 0 0 1 22 -21 Z',
+    main:   'M41 37 a9 9 0 0 1 3 -11 a10 10 0 0 1 10 -7 a10 10 0 0 1 13 0 a10 10 0 0 1 10 7 a9 9 0 0 1 3 11 q-4 -8 -12 -9 q-12 -3 -18 1 q-7 2 -9 8 Z',
   },
-  afro:  { main: 'M38 44 A23 23 0 0 0 82 44 Q79 28 60 28 Q41 28 38 44 Z' },
+  afro: {
+    // A halo behind the skull, so the face is never encroached on
+    behind: 'M60 7 a26 26 0 1 0 0.1 0 Z',
+    main:   'M40 36 A20 20 0 0 1 80 36 Q78 28 60 27 Q42 28 40 36 Z',
+  },
 }
 
 /* Face sits in the lower half of the head circle (60,36) r18 — the upper half
@@ -52,6 +66,14 @@ const MOUTH = {
   smile:   'M53 45 Q60 54 67 45',
   sad:     'M54 50 Q60 45 66 50',
   open:    null,   // drawn as an ellipse
+}
+
+/** Eyebrows, in the same order as MOUTH */
+const BROW = {
+  neutral: 'M49 33 h7 M64 33 h7',
+  smile:   'M49 32 q3.5 -2 7 0 M64 32 q3.5 -2 7 0',
+  sad:     'M49 31 q3.5 2 7 1 M64 32 q3.5 -1 7 -1',
+  open:    'M49 31 q3.5 -2 7 0 M64 31 q3.5 -2 7 0',
 }
 
 /** Which face each pose wears */
@@ -213,9 +235,14 @@ export default function Player({
         {/* ── HEAD ──────────────────────────────────── */}
         <g className="g-head">
           {limb('M60 50 L60 61', 12, skinFill)}
+          {hair.behind && <path d={hair.behind} fill={shade(c.hairColor, -0.06)} />}
           <circle cx="60" cy="36" r="18" fill={skinFill} />
           <path d={hair.main} fill={c.hairColor} />
           {hair.accent && <path d={hair.accent} fill={shade(c.hairColor, -0.12)} />}
+          {/* Brows do most of the expression work — without them every pose
+              reads the same from across a room. */}
+          <path d={BROW[face] ?? BROW.neutral} stroke={shade(c.hairColor, -0.1)}
+                strokeWidth="2.2" fill="none" strokeLinecap="round" />
           <circle cx="53.5" cy="39" r="2.5" fill="#241a12" />
           <circle cx="66.5" cy="39" r="2.5" fill="#241a12" />
           {face === 'open'

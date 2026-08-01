@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { banter, BANTER_MOMENTS } from './banter'
+import { banter, BANTER_MOMENTS, __resetBanter } from './banter'
 import { RIVALS, rivalFor, RIVAL_IDS, clockScaleFor, MIN_CLOCK_SCALE } from './rivals'
 import { ROSTER_IDS } from './characters'
 import { setLocale, LOCALES, t } from '../i18n'
@@ -99,6 +99,40 @@ describe('banter', () => {
 
   it('returns nothing without a rival', () => {
     expect(banter('greet', null, r)).toBeNull()
+  })
+
+  it('does not repeat itself over a session', () => {
+    __resetBanter()
+    const seen = []
+    for (let i = 0; i < 10; i++) seen.push(banter('greet', RIVALS.red_devil, r))
+    // The picker avoids anything said recently, so a short session should not
+    // land the same joke twice.
+    expect(new Set(seen).size).toBeGreaterThanOrEqual(6)
+  })
+
+  it('gives each rivalry its own voice', () => {
+    __resetBanter()
+    const linesFor = rival => {
+      const out = new Set()
+      for (let i = 0; i < 40; i++) out.add(banter('greet', rival, r))
+      return out
+    }
+    const utd = linesFor(RIVALS.red_devil)
+    __resetBanter()
+    const madrid = linesFor(RIVALS.white_wall)
+
+    // The Manchester derby should not sound like El Clásico
+    expect([...utd].some(l => /grann|derby/i.test(l))).toBe(true)
+    expect([...madrid].some(l => /Clásico|Bernab/i.test(l))).toBe(true)
+  })
+
+  it('has a distinct line set for every rival', () => {
+    for (const rival of Object.values(RIVALS)) {
+      __resetBanter()
+      const out = new Set()
+      for (let i = 0; i < 40; i++) out.add(banter('greet', rival, r))
+      expect(out.size, rival.id).toBeGreaterThanOrEqual(4)
+    }
   })
 })
 

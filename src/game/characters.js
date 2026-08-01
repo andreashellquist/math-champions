@@ -43,7 +43,7 @@ export const CHARACTERS = {
     id: 'haaland', name: 'Haaland', short: 'Haaland', flag: '🇳🇴',
     // Golden rather than pale blonde — a light blonde against light skin
     // merges into one shape at the 72px the pitch scene renders at
-    hair: 'flow', hairColor: '#E0A62A', skin: '#F0C8A8',
+    hair: 'flow', hairColor: '#E0A62A', skin: '#F6D9BE',
     number: 9, celebration: 'zen', breathe: 3.2,
     kits: {
       home:   { shirt: '#9BCFF2', accent: '#1C2C5B', pattern: 'solid',
@@ -56,7 +56,7 @@ export const CHARACTERS = {
 
   yamal: {
     id: 'yamal', name: 'Yamal', short: 'Yamal', flag: '🇪🇸',
-    hair: 'curls', hairColor: '#1A1310', skin: '#C8905E',
+    hair: 'curls', hairColor: '#1A1310', skin: '#C08A5C',
     number: 10, celebration: 'point', breathe: 3.0,
     kits: {
       home:   { shirt: '#C81B5A', accent: '#004D98', pattern: 'stripes',
@@ -69,7 +69,7 @@ export const CHARACTERS = {
 
   kane: {
     id: 'kane', name: 'Harry Kane', short: 'Kane', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    hair: 'crop', hairColor: '#5A4632', skin: '#EFC6A6',
+    hair: 'crop', hairColor: '#6B5236', skin: '#F4D3B4',
     number: 9, celebration: 'arms-wide', breathe: 3.5,
     kits: {
       home:   { shirt: '#F5F5F5', accent: '#D6001C', pattern: 'sash',
@@ -82,7 +82,7 @@ export const CHARACTERS = {
 
   bellingham: {
     id: 'bellingham', name: 'Jude Bellingham', short: 'Bellingham', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    hair: 'afro', hairColor: '#1B1310', skin: '#8D5A3B',
+    hair: 'afro', hairColor: '#221812', skin: '#C89468',
     number: 5, celebration: 'arms-wide', breathe: 3.1,
     kits: {
       home:   { shirt: '#FFFFFF', accent: '#FEBE10', pattern: 'solid',
@@ -95,7 +95,7 @@ export const CHARACTERS = {
 
   gyokeres: {
     id: 'gyokeres', name: 'Viktor Gyökeres', short: 'Gyökeres', flag: '🇸🇪',
-    hair: 'buzz', hairColor: '#3A2C22', skin: '#EFC6A6',
+    hair: 'buzz', hairColor: '#4A3624', skin: '#F4D3B4',
     number: 9, celebration: 'roar', breathe: 3.3,
     kits: {
       home:   { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
@@ -108,7 +108,7 @@ export const CHARACTERS = {
   },
   bonmati: {
     id: 'bonmati', name: 'Aitana Bonmatí', short: 'Aitana', flag: '🇪🇸',
-    hair: 'flow', hairColor: '#3A2A1C', skin: '#E8C4A0',
+    hair: 'flow', hairColor: '#4A3524', skin: '#F2D0AF',
     number: 14, celebration: 'arms-wide', breathe: 3.1,
     kits: {
       // Barça claret measures ~1.0:1 against the pitch, so it rides on the
@@ -123,7 +123,7 @@ export const CHARACTERS = {
 
   rolfo: {
     id: 'rolfo', name: 'Fridolina Rolfö', short: 'Fridolina', flag: '🇸🇪',
-    hair: 'crop', hairColor: '#C9A227', skin: '#F0D0B4',
+    hair: 'crop', hairColor: '#D9B450', skin: '#F7DCC2',
     number: 8, celebration: 'point', breathe: 3.4,
     kits: {
       home:   { shirt: '#FECC02', accent: '#005293', pattern: 'solid',

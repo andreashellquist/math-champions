@@ -145,23 +145,147 @@ export default {
 
   banter: {
     greet: [
-      '{rival}: "Jag har värmt upp handskarna. Kom igen!"',
-      '{rival}: "Fem skott. Jag är redo när du är."',
-      '{rival}: "Kul att ses igen. Visa vad du kan!"',
+      "{rival}: \"Handskarna är på. Kör!\"",
+      "{rival}: \"Fem skott. Jag är redo när du är.\"",
+      "{rival}: \"Kul att ses igen. Visa vad du kan!\"",
+      "{rival}: \"Jag har tränat på just den här. Vi får se.\"",
     ],
     beaten: [
-      '{rival}: "Den var för bra för mig."',
-      '{rival}: "Snyggt! Den fick jag aldrig tag i."',
-      '{rival}: "Oj. Den satt."',
+      "{rival}: \"Den var för bra för mig.\"",
+      "{rival}: \"Snyggt! Den fick jag aldrig tag i.\"",
+      "{rival}: \"Oj. Den satt.\"",
+      "{rival} plockar bollen ur nätet. \"Bra placerat.\"",
     ],
     wonTie: [
-      '{rival} ger dig en high five. "Bra spelat. Vi ses i returmatchen!"',
-      '{rival}: "Du var vass idag. Grattis!"',
+      "{rival} ger dig en high five. \"Bra spelat. Vi ses i returmatchen!\"",
+      "{rival}: \"Du var vass idag. Grattis!\"",
+      "{rival}: \"Mötet är ditt. Jag tar revansch nästa gång — snällt.\"",
     ],
     closeTie: [
-      '{rival}: "Tack för matchen. Jag väntar här när du vill igen."',
-      '{rival}: "Bra kämpat. Samma tid nästa gång?"',
+      "{rival}: \"Tack för matchen. Jag väntar här när du vill igen.\"",
+      "{rival}: \"Bra kämpat. Samma tid nästa gång?\"",
+      "{rival}: \"Skön match. Vi kör igen snart.\"",
     ],
+    red_devil: {
+      greet: [
+        "{rival}: \"Grannfejd igen. Jag har putsat handskarna extra för dig.\"",
+        "{rival}: \"Manchester är rött idag. Eller? Bevisa motsatsen.\"",
+        "{rival}: \"Sist blev det sex mål. Vi säger inte åt vilket håll.\"",
+        "{rival}: \"Halva stan tittar. Ingen press alls.\"",
+      ],
+      beaten: [
+        "{rival}: \"Aj. Rakt i krysset.\"",
+        "{rival}: \"Grannen firar. Det får jag leva med.\"",
+        "{rival}: \"Den där lär de sjunga om på andra sidan stan.\"",
+        "{rival}: \"Okej. Blått idag.\"",
+      ],
+      wonTie: [
+        "{rival}: \"Derbyt är ditt. Skryt lagom mycket.\"",
+        "{rival} skakar hand. \"Bra spelat, granne.\"",
+        "{rival}: \"Stan är din den här veckan. Bara den här.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Derbyn är alltid tajta. Vi ses snart igen, granne.\"",
+        "{rival}: \"Bra kämpat. Grannfejden fortsätter.\"",
+        "{rival}: \"Tack för matchen. Samma tid, samma stad?\"",
+      ],
+    },
+    white_wall: {
+      greet: [
+        "{rival}: \"El Clásico. Ingen liten match, det här.\"",
+        "{rival}: \"Vitt mot blårött. Som det ska vara.\"",
+        "{rival}: \"Bernabéu är fullsatt. Hela världen tittar.\"",
+        "{rival}: \"Vi har gjort det här i hundra år. Nu kör vi igen.\"",
+      ],
+      beaten: [
+        "{rival}: \"Olé. Den var för fin.\"",
+        "{rival}: \"Muren sprack där.\"",
+        "{rival}: \"Den gick precis där jag inte var.\"",
+        "{rival}: \"Bra! Det där var en Clásico-boll.\"",
+      ],
+      wonTie: [
+        "{rival}: \"Clásicot är ditt. Njut av det.\"",
+        "{rival} nickar. \"Snyggt spelat. Vi ses i Camp Nou.\"",
+        "{rival}: \"Du vann den här. Nästa blir svårare.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Ett Clásico till i historieboken. Tack!\"",
+        "{rival}: \"Bra kämpat. Returen väntar.\"",
+        "{rival}: \"Vi gör om det snart. Det gör vi alltid.\"",
+      ],
+    },
+    blaugrana: {
+      greet: [
+        "{rival}: \"Mer än en klubb, sägs det. Vi får se.\"",
+        "{rival}: \"Camp Nou är redo. Är du?\"",
+        "{rival}: \"Vitt lag på besök igen. Kul!\"",
+        "{rival}: \"Vi spelar från backlinjen. Du avslutar. Deal?\"",
+      ],
+      beaten: [
+        "{rival}: \"Olé! Den var vacker.\"",
+        "{rival}: \"Där hade jag ingen chans.\"",
+        "{rival}: \"Snyggt. Det där var nästan konst.\"",
+        "{rival} applåderar. \"Bra placerat.\"",
+      ],
+      wonTie: [
+        "{rival}: \"Du tog det. Bra spelat, verkligen.\"",
+        "{rival}: \"Clásicot går till dig. Grattis!\"",
+        "{rival} skakar hand. \"Vi ses i returen.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Tack för matchen. Alltid lika kul.\"",
+        "{rival}: \"Bra kämpat! Kom tillbaka snart.\"",
+        "{rival}: \"Nästa gång blir ännu bättre.\"",
+      ],
+    },
+    gunner: {
+      greet: [
+        "{rival}: \"Nordlondonderby. Grannarna är här igen.\"",
+        "{rival}: \"Vi har inte glömt förra säsongen. Kör!\"",
+        "{rival}: \"Emirates är utsålt. Visa vad du går för.\"",
+        "{rival}: \"Vi gick en hel säsong obesegrade en gång. Ingen press.\"",
+      ],
+      beaten: [
+        "{rival}: \"Aj! Rakt förbi.\"",
+        "{rival}: \"Den var för vass för mig.\"",
+        "{rival}: \"Norra London hörde den där.\"",
+        "{rival}: \"Bra skott. Verkligen.\"",
+      ],
+      wonTie: [
+        "{rival}: \"Derbyt är ditt. Bra spelat!\"",
+        "{rival} skakar hand. \"Vi ses på andra sidan stan.\"",
+        "{rival}: \"Du tog den. Nästa gång är min.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Tack för matchen, granne.\"",
+        "{rival}: \"Bra kämpat. Derbyt fortsätter.\"",
+        "{rival}: \"Samma tid nästa gång?\"",
+      ],
+    },
+    dynamite: {
+      greet: [
+        "{rival}: \"Sverige mot Danmark. Klassiskt grannbråk.\"",
+        "{rival}: \"Över bron och hit. Välkommen!\"",
+        "{rival}: \"Vi kallar det dansk dynamit. Du får se varför.\"",
+        "{rival}: \"Grannmatch. Ingen vill förlora den här.\"",
+      ],
+      beaten: [
+        "{rival}: \"Aj. Den gick in.\"",
+        "{rival}: \"Snyggt skott, granne.\"",
+        "{rival}: \"Den hörde jag bara susa förbi.\"",
+        "{rival}: \"Bra! Svenskarna jublar nog nu.\"",
+      ],
+      wonTie: [
+        "{rival}: \"Grannmatchen är din. Bra spelat!\"",
+        "{rival} skakar hand. \"Vi ses över bron.\"",
+        "{rival}: \"Du vann. Nästa gång tar jag revansch — snällt.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Tack för matchen, granne. Vi ses snart.\"",
+        "{rival}: \"Bra kämpat! Kom tillbaka över bron.\"",
+        "{rival}: \"Grannbråket fortsätter. Alltid lika kul.\"",
+      ],
+    },
   },
 
   map: {

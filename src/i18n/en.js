@@ -137,23 +137,147 @@ export default {
 
   banter: {
     greet: [
-      '{rival}: "Gloves are warm. Bring it on!"',
-      '{rival}: "Five shots. Ready when you are."',
-      '{rival}: "Good to see you again. Show me what you\'ve got!"',
+      "{rival}: \"Gloves are on. Let's go!\"",
+      "{rival}: \"Five shots. Ready when you are.\"",
+      "{rival}: \"Good to see you again. Show me what you've got!\"",
+      "{rival}: \"I've been practising for this one. We'll see.\"",
     ],
     beaten: [
-      '{rival}: "That one was too good for me."',
-      '{rival}: "Lovely! Never got near it."',
-      '{rival}: "Ooh. Right in the corner."',
+      "{rival}: \"That one was too good for me.\"",
+      "{rival}: \"Lovely! Never got near it.\"",
+      "{rival}: \"Ooh. Right in the corner.\"",
+      "{rival} picks the ball out of the net. \"Well placed.\"",
     ],
     wonTie: [
-      '{rival} gives you a high five. "Well played. See you in the return match!"',
-      '{rival}: "You were sharp today. Congratulations!"',
+      "{rival} gives you a high five. \"Well played. See you in the return match!\"",
+      "{rival}: \"You were sharp today. Congratulations!\"",
+      "{rival}: \"The tie is yours. I'll get you back next time — nicely.\"",
     ],
     closeTie: [
-      '{rival}: "Thanks for the game. I\'ll be here whenever you want another."',
-      '{rival}: "Good effort. Same time next time?"',
+      "{rival}: \"Thanks for the game. I'll be here whenever you want another.\"",
+      "{rival}: \"Good effort. Same time next time?\"",
+      "{rival}: \"Great game. Let's do it again soon.\"",
     ],
+    red_devil: {
+      greet: [
+        "{rival}: \"Derby day again. I polished the gloves specially.\"",
+        "{rival}: \"Manchester is red today. Or is it? Prove otherwise.\"",
+        "{rival}: \"Last time there were six goals. We won't say which way.\"",
+        "{rival}: \"Half the city is watching. No pressure at all.\"",
+      ],
+      beaten: [
+        "{rival}: \"Ouch. Straight into the top corner.\"",
+        "{rival}: \"The neighbours are celebrating. I'll live.\"",
+        "{rival}: \"They'll be singing about that one across town.\"",
+        "{rival}: \"Fine. Blue today.\"",
+      ],
+      wonTie: [
+        "{rival}: \"The derby is yours. Brag responsibly.\"",
+        "{rival} shakes your hand. \"Well played, neighbour.\"",
+        "{rival}: \"The city is yours this week. Just this week.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Derbies are always tight. See you soon, neighbour.\"",
+        "{rival}: \"Good effort. The rivalry continues.\"",
+        "{rival}: \"Thanks for the game. Same time, same city?\"",
+      ],
+    },
+    white_wall: {
+      greet: [
+        "{rival}: \"El Clásico. This is not a small game.\"",
+        "{rival}: \"White against claret and blue. As it should be.\"",
+        "{rival}: \"The Bernabéu is packed. The whole world is watching.\"",
+        "{rival}: \"We've been doing this for a hundred years. Off we go again.\"",
+      ],
+      beaten: [
+        "{rival}: \"Olé. That was too pretty.\"",
+        "{rival}: \"The wall cracked there.\"",
+        "{rival}: \"It went exactly where I wasn't.\"",
+        "{rival}: \"Good! Now that was a Clásico finish.\"",
+      ],
+      wonTie: [
+        "{rival}: \"The Clásico is yours. Enjoy it.\"",
+        "{rival} nods. \"Nicely played. See you at the Camp Nou.\"",
+        "{rival}: \"You won this one. The next will be harder.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Another Clásico for the history books. Thank you!\"",
+        "{rival}: \"Good effort. The return leg is waiting.\"",
+        "{rival}: \"We'll do it again soon. We always do.\"",
+      ],
+    },
+    blaugrana: {
+      greet: [
+        "{rival}: \"More than a club, they say. We'll see.\"",
+        "{rival}: \"The Camp Nou is ready. Are you?\"",
+        "{rival}: \"The white shirts are visiting again. Excellent!\"",
+        "{rival}: \"We play it out from the back. You finish. Deal?\"",
+      ],
+      beaten: [
+        "{rival}: \"Olé! That was beautiful.\"",
+        "{rival}: \"I had no chance with that one.\"",
+        "{rival}: \"Lovely. That was nearly art.\"",
+        "{rival} applauds. \"Well placed.\"",
+      ],
+      wonTie: [
+        "{rival}: \"You took it. Really well played.\"",
+        "{rival}: \"The Clásico goes to you. Congratulations!\"",
+        "{rival} shakes your hand. \"See you in the return leg.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Thanks for the game. Always a pleasure.\"",
+        "{rival}: \"Good effort! Come back soon.\"",
+        "{rival}: \"Next time will be even better.\"",
+      ],
+    },
+    gunner: {
+      greet: [
+        "{rival}: \"North London derby. The neighbours are here again.\"",
+        "{rival}: \"We haven't forgotten last season. Let's go!\"",
+        "{rival}: \"The Emirates is sold out. Show us what you've got.\"",
+        "{rival}: \"We went a whole season unbeaten once. No pressure.\"",
+      ],
+      beaten: [
+        "{rival}: \"Ouch! Straight past me.\"",
+        "{rival}: \"That was too sharp for me.\"",
+        "{rival}: \"North London heard that one.\"",
+        "{rival}: \"Good strike. Genuinely.\"",
+      ],
+      wonTie: [
+        "{rival}: \"The derby is yours. Well played!\"",
+        "{rival} shakes your hand. \"See you on the other side of town.\"",
+        "{rival}: \"You took it. The next one is mine.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Thanks for the game, neighbour.\"",
+        "{rival}: \"Good effort. The derby goes on.\"",
+        "{rival}: \"Same time next time?\"",
+      ],
+    },
+    dynamite: {
+      greet: [
+        "{rival}: \"Sweden against Denmark. Classic neighbourly trouble.\"",
+        "{rival}: \"Over the bridge and here you are. Welcome!\"",
+        "{rival}: \"They call it Danish dynamite. You'll see why.\"",
+        "{rival}: \"Neighbours' match. Nobody wants to lose this one.\"",
+      ],
+      beaten: [
+        "{rival}: \"Ouch. In it goes.\"",
+        "{rival}: \"Lovely strike, neighbour.\"",
+        "{rival}: \"I just heard that one whistle past.\"",
+        "{rival}: \"Good! The Swedes will be cheering now.\"",
+      ],
+      wonTie: [
+        "{rival}: \"The neighbours' match is yours. Well played!\"",
+        "{rival} shakes your hand. \"See you across the bridge.\"",
+        "{rival}: \"You won. I'll get you back next time — nicely.\"",
+      ],
+      closeTie: [
+        "{rival}: \"Thanks for the game, neighbour. See you soon.\"",
+        "{rival}: \"Good effort! Come back over the bridge.\"",
+        "{rival}: \"The neighbourly trouble continues. Always fun.\"",
+      ],
+    },
   },
 
   map: {
