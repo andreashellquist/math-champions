@@ -162,6 +162,40 @@ describe('a whole round', () => {
   })
 })
 
+describe('Snabbskott (arcade), through the real component tree', () => {
+  // Regression: `ModeSelect`'s arcade chip never passed `kicks` to
+  // `startRound`, so `totalKicks` silently defaulted to 5 — a round
+  // advertised as "30 seconds" actually ended after exactly 5 answers, in
+  // about 1.6 real seconds, regardless of the clock. This only shows up by
+  // driving the real menu → chip → round path; a reducer test that hand-built
+  // the round object never exercised the buggy default at all.
+  it('does not end after five answers — the clock is what ends an arcade round', () => {
+    render(<App />)                          // fresh profile lands on the menu
+    click(button('Välj själv') ?? button('Pick myself'))
+    // Addition is unlocked from a fresh profile, so its arcade chip is reachable
+    click(button('Snabbskott'))
+    expect(q()).toBeTruthy()
+
+    for (let i = 0; i < 8; i++) {
+      const before = q()
+      expect(onResult(), `still an active round after ${i} answers`).toBe(false)
+      const btn = options().find(b => Number(b.textContent.trim()) === solve()) ?? options()[0]
+      click(btn)
+      tick(700)                              // past both the hit and miss beats
+      expect(q(), `question changed after answer ${i + 1}`).not.toBe(before)
+    }
+    // Eight items answered, well past the old hidden 5-item cap, clock still running
+    expect(onResult()).toBe(false)
+  })
+
+  it('publishes the duration on the chip before the child commits', () => {
+    render(<App />)
+    click(button('Välj själv') ?? button('Pick myself'))
+    const chip = button('Snabbskott')
+    expect(chip.textContent).toMatch(/\d+\s*sek/)   // e.g. "30 sek" — not just a fact count
+  })
+})
+
 describe('the first round of a session is the short one', () => {
   it('opens with three kicks, not five', () => {
     // Task initiation is priced by the size of the commitment, so the round

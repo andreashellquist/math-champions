@@ -13,8 +13,8 @@
  * session, never a white screen.
  */
 import {
-  emptyState, emptyRivalry, emptyGates, emptyArcade, STATE_VERSION, OP_KEYS,
-  COMPETITIONS, TIE_TARGET, GATES, GATE_SIZE,
+  emptyState, emptyRivalry, emptyGates, emptyArcade, arcadeKey, STATE_VERSION,
+  OP_KEYS, COMPETITIONS, TIE_TARGET, GATES, GATE_SIZE, ARCADE_DURATIONS,
 } from './mastery'
 import { RIVAL_IDS } from './rivals'
 import { THEMES } from './theme'
@@ -121,17 +121,21 @@ export function sanitize(raw) {
   }
 }
 
-/** Arcade bests. Bounded by the set list, so it cannot grow with play. */
+/** Arcade bests, keyed `${setId}@${durationMs}`. Bounded by the set list times
+    the duration list, so it cannot grow with play. */
 function cleanArcade(raw) {
   const out = emptyArcade()
   if (!raw || typeof raw !== 'object') return out
   for (const set of ARCADE_SETS) {
-    const rec = raw[set.id]
-    if (!rec || typeof rec !== 'object') continue
-    out[set.id] = {
-      best: int(rec.best, 0, 999),
-      runs: Array.isArray(rec.runs) ? rec.runs.map(x => int(x, 0, 999)).slice(-8) : [],
-      at: int(rec.at, 0, Number.MAX_SAFE_INTEGER),
+    for (const durationMs of ARCADE_DURATIONS) {
+      const key = arcadeKey(set.id, durationMs)
+      const rec = raw[key]
+      if (!rec || typeof rec !== 'object') continue
+      out[key] = {
+        best: int(rec.best, 0, 999),
+        runs: Array.isArray(rec.runs) ? rec.runs.map(x => int(x, 0, 999)).slice(-8) : [],
+        at: int(rec.at, 0, Number.MAX_SAFE_INTEGER),
+      }
     }
   }
   return out
@@ -211,6 +215,19 @@ const MIGRATIONS = {
   4: prev => ({ ...prev, v: 5, gates: emptyGates() }),
   // v6 adds arcade bests. Empty is correct — no run has been played yet.
   5: prev => ({ ...prev, v: 6, arcade: emptyArcade() }),
+  // v7 makes duration part of the arcade key (`setId@durationMs` rather than
+  // bare `setId`) — a 30s run and a 60s run are different measurements, and
+  // sharing one "best" between them meant the first 60s attempt made every
+  // later 30s run permanently unable to read as a personal best. Every v6
+  // record was recorded under the old flat 30-second constant, so it maps
+  // straight across rather than being dropped.
+  6: prev => {
+    const remapped = {}
+    for (const [k, v] of Object.entries(prev.arcade ?? {})) {
+      remapped[k.includes('@') ? k : arcadeKey(k, 30000)] = v
+    }
+    return { ...prev, v: 7, arcade: remapped }
+  },
 }
 
 /* ── PUBLIC API ────────────────────────────────────────────── */

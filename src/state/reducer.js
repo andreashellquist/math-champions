@@ -401,10 +401,16 @@ export function reducer(state, action) {
 
         // A monotone personal best is hit less and less often the more a
         // child plays — computed before the write, so "was THIS run a best"
-        // can still be answered after the record moves.
-        if (r.mode === 'arcade' && r.setId) {
-          arcadeTierResult = arcadeTier(mastery, r.setId, r.goals)
-          mastery = applyArcadeResult(mastery, { setId: r.setId, score: r.goals, at: action.at ?? Date.now() })
+        // can still be answered after the record moves. Free play (no clock,
+        // `r.timerMs` null) is never scored at all: without a fixed duration
+        // there is nothing for a count to be comparable *to*, and a stopping
+        // tap that also set a record would turn "when do I stop" into a live
+        // cost-benefit calculation layered on top of the arithmetic.
+        if (r.mode === 'arcade' && r.setId && r.timerMs) {
+          arcadeTierResult = arcadeTier(mastery, r.setId, r.timerMs, r.goals)
+          mastery = applyArcadeResult(mastery, {
+            setId: r.setId, durationMs: r.timerMs, score: r.goals, at: action.at ?? Date.now(),
+          })
         }
 
         return {
@@ -419,6 +425,11 @@ export function reducer(state, action) {
         ...state,
         round: {
           ...r,
+          // Content topped up on the fly for arcade when the precomputed
+          // batch runs low — see GameContext's `advance()`. Never trimmed:
+          // the old items already answered stay in place for the requeue/role
+          // bookkeeping other modes rely on.
+          queue: action.extraQueue ? [...r.queue, ...action.extraQueue] : r.queue,
           suddenDeath: r.suddenDeath || enteringSuddenDeath,
           kickIdx: nextIdx,
           question: action.question,
@@ -472,12 +483,18 @@ export function reducer(state, action) {
      * score, so it skips both `agg.rounds` and `applyArcadeResult` entirely —
      * it must never appear in the run-history strip or be eligible to set a
      * personal best.
+     *
+     * Free play (`r.timerMs` null) has no clock to be early against — stopping
+     * is the *only* way it ever ends, not a bailout, so it must not carry
+     * `stoppedEarly`. Marking it early would make ResultScreen's honest
+     * "no clock, no record" copy permanently unreachable for the mode whose
+     * whole point is that stopping whenever you want is the intended ending.
      */
     case 'END_ROUND': {
       const r = state.round
       if (!r) return state
       if (r.mode === 'arcade') {
-        return { ...state, screen: 'result', round: { ...r, phase: 'done', stoppedEarly: true } }
+        return { ...state, screen: 'result', round: { ...r, phase: 'done', stoppedEarly: !!r.timerMs } }
       }
       return {
         ...state,

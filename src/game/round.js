@@ -16,9 +16,11 @@ import { arcadeSet } from './arcadeSets'
 import { rng as defaultRng, makeRng } from './rng'
 
 export const ROUND_SIZE = 5
-/** Comfortably more items than a 30s run could ever reach, so the queue never
-    runs out mid-round and the clock is always what ends it. */
-const ARCADE_MIN_ITEMS = 150
+/** Comfortably more items than a 60s run could ever reach, so the queue never
+    runs out mid-round for either timed length. Free play (no clock) can in
+    principle outlast this batch — GameContext tops it up on demand rather
+    than treating "ran out of pre-built items" as "round over". */
+const ARCADE_MIN_ITEMS = 200
 
 /** Choose the facts for a round: warm-up, review, review, struggle, new */
 export function buildRoundQueue(mastery, op, { size = ROUND_SIZE, mode = 'training', setId = null, rng = defaultRng } = {}) {

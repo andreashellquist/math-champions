@@ -42,9 +42,10 @@ describe('arcade copy interpolates cleanly (regression: {n} left literal)', () =
   it('never leaves a placeholder on screen for any arcade string that takes params', async () => {
     const { t, setLocale, LOCALES } = await import('../i18n')
     const calls = {
-      'arcade.chip': { n: 24 },
+      'arcade.chip': { s: 30 },
       'arcade.liveScore': { n: 7 },
-      'arcade.runScore': { n: 12 },
+      'arcade.runScore': { n: 12, s: 60 },
+      'arcade.freeScore': { n: 8 },
       'arcade.stoppedEarly': { n: 5 },
       'arcade.bestLabel': { n: 9 },
     }
@@ -53,7 +54,9 @@ describe('arcade copy interpolates cleanly (regression: {n} left literal)', () =
       for (const [key, params] of Object.entries(calls)) {
         const out = t(key, params)
         expect(out, `${locale}:${key}`).not.toMatch(/\{\w+\}/)
-        expect(out, `${locale}:${key}`).toContain(String(params.n))
+        for (const v of Object.values(params)) {
+          expect(out, `${locale}:${key}`).toContain(String(v))
+        }
       }
     }
     setLocale('sv')

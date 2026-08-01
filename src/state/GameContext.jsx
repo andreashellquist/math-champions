@@ -51,10 +51,18 @@ export function GameProvider({ children }) {
   const startRound = useCallback((op, { mode = 'training', timerMs = null, kicks = TOTAL_KICKS, gateId = null, setId = null } = {}) => {
     const queue = buildRoundQueue(state.mastery, op, { mode, size: kicks, setId })
     if (!queue.length) return
-    setSessionRounds(n => n + 1)
+    setSessionRounds(n => n + (mode === 'arcade' ? 0.5 : 1))
     dispatch({
       type: 'START_ROUND',
-      op, mode, queue, timerMs, totalKicks: kicks, gateId, setId,
+      op, mode, queue, timerMs, gateId, setId,
+      // Arcade must never end on item count — it ends on the clock
+      // (`arcadeExpiring`) or an explicit stop (`END_ROUND`), full stop. A
+      // bounded `kicks` default here previously meant every arcade round
+      // silently ended after 5 items regardless of the advertised duration:
+      // a 30s run finished in ~1.5s, mislabelled "30 seconds" on the result
+      // screen. `Number.MAX_SAFE_INTEGER` makes the item-count check in
+      // ADVANCE's `nextIdx >= total` structurally unreachable for this mode.
+      totalKicks: mode === 'arcade' ? Number.MAX_SAFE_INTEGER : kicks,
       fact: queue[0],
       question: questionFor(state.mastery, queue[0], { mode }),
       startedAt: Date.now(),
@@ -71,16 +79,29 @@ export function GameProvider({ children }) {
     const r = state.round
     if (!r) return
     const nextIdx = r.kickIdx + 1
-    // Sudden death runs past the end of the composed queue, so top it up
-    const fact = r.queue[nextIdx]
-      ?? (r.goals >= (r.totalKicks ?? TOTAL_KICKS)
-        ? buildRoundQueue(state.mastery, r.op, { mode: r.mode, size: 1 })[0]
-        : undefined)
+    let fact = r.queue[nextIdx]
+    let extraQueue = null
+
+    if (!fact && r.mode === 'arcade' && r.setId) {
+      // Never let arcade run dry mid-round — content exhaustion must not be
+      // mistaken for the round being over. A timed run has ~200 items of
+      // headroom and will never actually reach this in 30-60s, but free play
+      // (no clock, ends only when the child stops) has no natural ceiling, so
+      // this is the thing that makes "endless" genuinely endless rather than
+      // secretly capped at whatever batch size was precomputed.
+      extraQueue = buildRoundQueue(state.mastery, r.op, { mode: 'arcade', setId: r.setId })
+      fact = extraQueue[0]
+    } else if (!fact && r.goals >= (r.totalKicks ?? TOTAL_KICKS)) {
+      // Sudden death (shootout) runs past the end of its composed queue
+      fact = buildRoundQueue(state.mastery, r.op, { mode: r.mode, size: 1 })[0]
+    }
+
     dispatch({
       type: 'ADVANCE',
       fact,
       question: fact ? questionFor(state.mastery, fact, { mode: r.mode }) : null,
       rivalId: rival.id,
+      extraQueue,
       at: Date.now(),
     })
   }, [state.round, state.mastery, rival])

@@ -18,7 +18,7 @@ import {
 } from './facts'
 import { rng as defaultRng } from './rng'
 
-export const STATE_VERSION = 6
+export const STATE_VERSION = 7
 
 /** Items (not seconds) before a fact is due again, per box */
 const BOX_GAP = [0, 3, 8, 20, 45, 100]
@@ -264,16 +264,40 @@ export const gatesPassed = state => Object.values(state.gates ?? {}).filter(g =>
    to its own namespace and nothing else.
    ─────────────────────────────────────────────────────────── */
 
-export const ARCADE_DURATION_MS = 30000
-/** Recent runs kept per set — enough for a run-history strip, not a ledger */
+/**
+ * Two lengths, not a slider: a low-choice-load pair with self-evident
+ * semantics ("a quick one" vs "the longer one"). 30s alone measures mostly
+ * noise — at realistic per-item pacing a run is only ~13 items, and the
+ * binomial sampling error at that n swings the score by more than the child's
+ * actual skill does between attempts, so the run-history strip was reading
+ * measurement error as feedback about the child. 60s roughly halves that
+ * relative error and is a duration a 7-year-old can hold intuitively ("en
+ * minut"). Above ~90s a within-run vigilance decrement becomes visible to the
+ * child as their own live pace slowing down, which is worse than the flat
+ * external cutoff it would replace — so the pair stops here, not higher.
+ */
+export const ARCADE_DURATIONS = [30000, 60000]
+export const ARCADE_DEFAULT_MS = 60000
+/** Recent runs kept per (set, duration) — enough for a run-history strip, not a ledger */
 const ARCADE_RUN_MEMORY = 8
 
 export function emptyArcade() {
   return {}
 }
 
-export const arcadeBest = (state, setId) => state.arcade?.[setId]?.best ?? 0
-export const arcadeRuns = (state, setId) => state.arcade?.[setId]?.runs ?? []
+/**
+ * The storage key for one (fact set, duration) pair.
+ *
+ * Duration is part of the key, not just the set: a 30s run and a 60s run are
+ * not the same measurement, and scoring them into one shared "best" would
+ * mean the first 60s attempt sets a number no 30s run could ever beat again —
+ * every later 30s run would silently read as "not your best" forever.
+ * `null`/free play (no clock, never scored) never reaches this at all.
+ */
+export const arcadeKey = (setId, durationMs) => `${setId}@${durationMs}`
+
+export const arcadeBest = (state, setId, durationMs) => state.arcade?.[arcadeKey(setId, durationMs)]?.best ?? 0
+export const arcadeRuns = (state, setId, durationMs) => state.arcade?.[arcadeKey(setId, durationMs)]?.runs ?? []
 
 /**
  * Is this run among the child's best recent ones?
@@ -283,10 +307,10 @@ export const arcadeRuns = (state, setId) => state.arcade?.[setId]?.runs ?? []
  * question that mostly answers no. Top-3-of-last-10 is a band that still fires
  * often, so there is usually something true and positive to say.
  */
-export function arcadeTier(state, setId, score) {
-  const prevBest = arcadeBest(state, setId)
+export function arcadeTier(state, setId, durationMs, score) {
+  const prevBest = arcadeBest(state, setId, durationMs)
   if (score > prevBest) return 'best'
-  const runs = arcadeRuns(state, setId)
+  const runs = arcadeRuns(state, setId, durationMs)
   const top3 = [...runs, score].sort((a, b) => b - a).slice(0, 3)
   if (top3.includes(score) && runs.length >= 2) return 'top3'
   return null
@@ -294,13 +318,14 @@ export function arcadeTier(state, setId, score) {
 
 /** Record one arcade run. Additive only — the best a child has ever scored
     can never be reduced, and a bailed-early run is simply not recorded. */
-export function applyArcadeResult(state, { setId, score, at = Date.now() }) {
-  const prev = state.arcade?.[setId]
+export function applyArcadeResult(state, { setId, durationMs, score, at = Date.now() }) {
+  const key = arcadeKey(setId, durationMs)
+  const prev = state.arcade?.[key]
   return {
     ...state,
     arcade: {
       ...state.arcade,
-      [setId]: {
+      [key]: {
         best: Math.max(prev?.best ?? 0, score),
         runs: [...(prev?.runs ?? []), score].slice(-ARCADE_RUN_MEMORY),
         at,

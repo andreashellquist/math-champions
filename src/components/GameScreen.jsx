@@ -361,7 +361,10 @@ export default function GameScreen() {
             <div className="shot-clock-fill" ref={barRef} />
           </button>
         )}
-        {arcade && (
+        {/* Free play (`r.timerMs` null) has no clock at all — showing an empty
+            or frozen bar would be a visible lie about a mode whose entire
+            point is that nothing is timed. */}
+        {arcade && r.timerMs && (
           <div className="shot-clock" data-urgency={urgency} aria-hidden="true">
             <div className="shot-clock-fill" ref={barRef} />
           </div>

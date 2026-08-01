@@ -3,7 +3,7 @@ import { useTranslation } from '../i18n/useTranslation'
 import { ratingFor } from '../game/config'
 import { computeTimeLimit } from '../hooks/useDeadline'
 import {
-  masteredCount, labelForKey, GATE_PASS, ARCADE_DURATION_MS, arcadeBest, arcadeRuns,
+  masteredCount, labelForKey, GATE_PASS, arcadeBest, arcadeRuns,
 } from '../game/mastery'
 import Player from './Player'
 import Confetti from './Confetti'
@@ -26,10 +26,13 @@ export default function ResultScreen() {
   const missedLabels = [...new Set(r.missedKeys ?? [])].slice(0, 6).map(labelForKey)
 
   const replay = () => {
-    // Snabbskott restarts itself: same set, same fixed duration. No
-    // `computeTimeLimit` — comparability across runs is the entire point.
+    // Snabbskott restarts itself: same set, same duration — specifically
+    // *this run's own* duration (`r.timerMs`), not a global default. A child
+    // who picked 30s and taps "again" must get 30s again, or the restart
+    // silently changes what the score is being compared against. Free play
+    // (`r.timerMs` null) replays as free play.
     if (r.mode === 'arcade') {
-      startRound(r.op, { mode: 'arcade', setId: r.setId, timerMs: ARCADE_DURATION_MS })
+      startRound(r.op, { mode: 'arcade', setId: r.setId, timerMs: r.timerMs })
       return
     }
 
@@ -73,10 +76,21 @@ export default function ResultScreen() {
                 monotone maximum, so after enough runs "did you beat your
                 record" mostly answers no, and that shouldn't be the thing a
                 child reads every single time they finish. */}
-            <div className="result-score">{t('arcade.runScore', { n: goals })}</div>
+            <div className="result-score">
+              {r.timerMs
+                ? t('arcade.runScore', { n: goals, s: r.timerMs / 1000 })
+                : t('arcade.freeScore', { n: goals })}
+            </div>
 
             {r.stoppedEarly ? (
               <p className="result-msg">{t('arcade.stoppedEarly', { n: goals })}</p>
+            ) : !r.timerMs ? (
+              // Free play is never scored — no tier, no strip, no "best".
+              // Without a fixed duration there is nothing a count is
+              // comparable *to*, and a stopping tap that also set a record
+              // would turn "when do I stop" into a live cost-benefit
+              // calculation on top of the arithmetic.
+              <p className="result-msg">{t('arcade.freeMsg')}</p>
             ) : (
               <>
                 {r.arcadeTierResult === 'best' && <p className="result-msg">{t('arcade.newBest')}</p>}
@@ -87,8 +101,8 @@ export default function ResultScreen() {
                     variance and trend, not a binary "you lost to yourself". */}
                 <div className="arcade-strip" role="img" aria-label={t('arcade.stripLabel')}>
                   {(() => {
-                    const runs = arcadeRuns(state.mastery, r.setId)
-                    const best = arcadeBest(state.mastery, r.setId) || 1
+                    const runs = arcadeRuns(state.mastery, r.setId, r.timerMs)
+                    const best = arcadeBest(state.mastery, r.setId, r.timerMs) || 1
                     return runs.map((score, i) => (
                       <span
                         key={i}
@@ -99,17 +113,17 @@ export default function ResultScreen() {
                   })()}
                 </div>
                 <p className="arcade-best-label">
-                  {t('arcade.bestLabel', { n: arcadeBest(state.mastery, r.setId) })}
+                  {t('arcade.bestLabel', { n: arcadeBest(state.mastery, r.setId, r.timerMs) })}
                 </p>
+              </>
+            )}
 
-                {missedLabels.length > 0 && (
-                  <>
-                    <p className="result-footnote">{t('arcade.checkNext')}</p>
-                    <ul className="gate-missed">
-                      {missedLabels.slice(0, 3).map(l => <li key={l}>{l}</li>)}
-                    </ul>
-                  </>
-                )}
+            {!r.stoppedEarly && missedLabels.length > 0 && (
+              <>
+                <p className="result-footnote">{t('arcade.checkNext')}</p>
+                <ul className="gate-missed">
+                  {missedLabels.slice(0, 3).map(l => <li key={l}>{l}</li>)}
+                </ul>
               </>
             )}
           </>

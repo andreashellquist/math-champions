@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { reducer, initialState, SUDDEN_DEATH_MAX } from './reducer'
 import { setLocale } from '../i18n'
 import { opName } from '../game/config'
-import { emptyState } from '../game/mastery'
+import { emptyState, arcadeKey } from '../game/mastery'
 import { buildQuestion } from '../game/questions'
 import { arcadeQuestionFor } from '../game/round'
 import { ALL_FACTS, factKey } from '../game/facts'
@@ -337,12 +337,18 @@ describe('a demotion is named, not silent', () => {
 describe('Snabbskott (arcade)', () => {
   const ARCADE_FACTS = ALL_FACTS.filter(f => f.op === 'addition').slice(0, 6)
 
+  const D = 30000
+
   function arcadeRoundInProgress(overrides = {}) {
     const fact = ARCADE_FACTS[0]
     const question = arcadeQuestionFor(fact, { rng })
     const s = reducer(initialState(emptyState()), {
       type: 'START_ROUND', op: 'addition', mode: 'arcade', setId: 'addition.core',
-      queue: ARCADE_FACTS, fact, question, startedAt: 1000, timerMs: 30000,
+      // Matches what GameContext.startRound now always sets for arcade —
+      // item count alone must never be able to end the round, only the clock
+      // (ARCADE_EXPIRE) or an explicit stop (END_ROUND) can.
+      totalKicks: Number.MAX_SAFE_INTEGER,
+      queue: ARCADE_FACTS, fact, question, startedAt: 1000, timerMs: D,
     })
     return { ...s, round: { ...s.round, ...overrides }, question }
   }
@@ -406,8 +412,8 @@ describe('Snabbskott (arcade)', () => {
     s = reducer(s, { type: 'ADVANCE', fact: null, question: null, at: 31000 })
 
     expect(s.round.arcadeTierResult).toBe('best')   // first run ever on this set
-    expect(s.mastery.arcade['addition.core'].best).toBe(3)
-    expect(s.mastery.arcade['addition.core'].runs).toEqual([3])
+    expect(s.mastery.arcade[arcadeKey('addition.core', D)].best).toBe(3)
+    expect(s.mastery.arcade[arcadeKey('addition.core', D)].runs).toEqual([3])
   })
 
   it('never touches agg.rounds or agg.correct — those gate unlocks and gate cooldowns', () => {
@@ -423,21 +429,34 @@ describe('Snabbskott (arcade)', () => {
     s = reducer(s, { type: 'END_ROUND' })
 
     expect(s.round.stoppedEarly).toBe(true)
-    expect(s.mastery.arcade['addition.core']).toBeUndefined()   // never written
+    expect(s.mastery.arcade[arcadeKey('addition.core', D)]).toBeUndefined()   // never written
     expect(s.mastery.agg.rounds).toBe(0)                        // not even the lifetime count
+  })
+
+  it('does not mark free play as stopped early — stopping is the only way it ever ends', () => {
+    // Free play has no clock, so a manual stop isn't a bailout on an attempt —
+    // it's the intended ending. Regression: END_ROUND used to set
+    // `stoppedEarly` unconditionally for every arcade mode, which made
+    // ResultScreen's "no clock, no record" free-play message permanently
+    // unreachable (it always fell into the "stopped early" branch instead).
+    let s = arcadeRoundInProgress({ goals: 6, timerMs: null })
+    s = reducer(s, { type: 'END_ROUND' })
+
+    expect(s.round.stoppedEarly).toBe(false)
+    expect(s.mastery.arcade[arcadeKey('addition.core', D)]).toBeUndefined()
   })
 
   it('a personal best can only ever rise', () => {
     let s = arcadeRoundInProgress({ goals: 10 })
     s = reducer(s, { type: 'ARCADE_EXPIRE' })
     s = reducer(s, { type: 'ADVANCE', fact: null, question: null, at: 31000 })
-    expect(s.mastery.arcade['addition.core'].best).toBe(10)
+    expect(s.mastery.arcade[arcadeKey('addition.core', D)].best).toBe(10)
 
     // A worse run afterwards must not lower it
     let s2 = { ...s, screen: 'game', round: { ...s.round, phase: 'asking', goals: 2, arcadeExpiring: false } }
     s2 = reducer(s2, { type: 'ARCADE_EXPIRE' })
     s2 = reducer(s2, { type: 'ADVANCE', fact: null, question: null, at: 62000 })
-    expect(s2.mastery.arcade['addition.core'].best).toBe(10)
+    expect(s2.mastery.arcade[arcadeKey('addition.core', D)].best).toBe(10)
     expect(s2.round.arcadeTierResult).not.toBe('best')
   })
 
@@ -447,5 +466,29 @@ describe('Snabbskott (arcade)', () => {
     const s2 = reducer(s1, { type: 'ANSWER', value: s0.round.question.ans, at: 1501 })
     expect(s2).toBe(s1)
     expect(s2.round.goals).toBe(1)
+  })
+
+  // Regression: `startRound` used to default `totalKicks` to `TOTAL_KICKS`
+  // (5) for every mode including arcade, because `playArcade` never passed a
+  // `kicks` override. A round genuinely ended after exactly 5 answers —
+  // about 1.6s of real play — while the result screen went on to claim
+  // "5 mål på 30 sekunder". The clock had nothing to do with it; the round
+  // ended purely because `nextIdx >= total` became true at item 5.
+  it('does not end after five items — only the clock or an explicit stop may end it', () => {
+    let s = arcadeRoundInProgress()
+    const bigQueue = Array.from({ length: 20 }, (_, i) => ARCADE_FACTS[i % ARCADE_FACTS.length])
+    s = { ...s, round: { ...s.round, queue: bigQueue } }
+
+    for (let i = 0; i < 12; i++) {
+      s = reducer(s, { type: 'ANSWER', value: s.round.question.ans, at: 1500 + i * 300 })
+      expect(s.screen, `still playing after item ${i + 1}`).not.toBe('result')
+      const nextFact = bigQueue[i + 1]
+      s = reducer(s, {
+        type: 'ADVANCE', fact: nextFact, question: arcadeQuestionFor(nextFact, { rng }), at: 1600 + i * 300,
+      })
+    }
+    // Twelve items answered, well past the old hidden cap of 5, clock never fired
+    expect(s.round.goals).toBe(12)
+    expect(s.screen).toBe('game')
   })
 })

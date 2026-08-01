@@ -387,10 +387,15 @@ export default {
   },
 
   arcade: {
-    chip: "⚡ Quick Shots ({n} facts)",
+    // The duration is on the chip itself — it must never be a surprise a
+    // child discovers once the clock is already running.
+    chip: "⚡ Quick Shots · {s}s",
+    freeChip: "♾️ No clock",
     lastBall: "Last ball!",
     liveScore: "⚽ {n}",
-    runScore: "{n} goals in 30 seconds",
+    runScore: "{n} goals in {s} seconds",
+    freeScore: "{n} goals",
+    freeMsg: "No clock, no record — just practice until you want to stop.",
     newBest: "🏆 Your best yet!",
     topThree: "⚡ One of your best three.",
     justForFun: "Just for fun — this doesn't affect your training.",

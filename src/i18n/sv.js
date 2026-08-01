@@ -395,10 +395,15 @@ export default {
   },
 
   arcade: {
-    chip: "⚡ Snabbskott ({n} tal)",
+    // The duration is on the chip itself — it must never be a surprise a
+    // child discovers once the clock is already running.
+    chip: "⚡ Snabbskott · {s} sek",
+    freeChip: "♾️ Utan klocka",
     lastBall: "Sista bollen!",
     liveScore: "⚽ {n}",
-    runScore: "{n} mål på 30 sekunder",
+    runScore: "{n} mål på {s} sekunder",
+    freeScore: "{n} mål",
+    freeMsg: "Ingen klocka, inget rekord — bara träning tills du vill sluta.",
     newBest: "🏆 Ditt bästa hittills!",
     topThree: "⚡ En av dina tre bästa.",
     justForFun: "Bara för skoj skull — det här påverkar inte din träning.",

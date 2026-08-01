@@ -273,10 +273,35 @@ theme is measured to clear 3:1 contrast against both ends of its gradient.
 
 ## Snabbskott (arcade)
 
-A fixed 30-second, fixed-content, personal-best sprint per operation — built
-after both the pedagogy and ADHD reviewers were asked specifically whether a
-"highscore mode" belonged in this app at all. Verdict from both: yes, with
-real changes to the obvious version.
+A fixed-content, personal-best sprint per operation — built after both the
+pedagogy and ADHD reviewers were asked specifically whether a "highscore mode"
+belonged in this app at all. Verdict from both: yes, with real changes to the
+obvious version.
+
+A later "shouldn't arcade just be endless?" question went back to both
+reviewers. Both rejected the literal reading — an unbounded round scored
+against a personal best turns "when do I stop" into a live cost-benefit
+calculation, and at ~13 items answered per 30 seconds the raw score is noisy
+enough (binomial sampling error, SD/mean ≈ 12%) that a longer window measures
+skill more honestly than a longer one just measures luck. The verdict that
+shipped: keep the external clock (it's what makes the score comparable across
+runs at all), raise the default to **60 seconds** — halving the sampling
+error to ≈ 8% and landing on "en minut," a duration a 7-year-old already has
+an intuition for — keep 30s as the fast option, and add a genuinely separate
+**free play** (`Utan klocka`, no timer, no score, no personal best) as the
+honest way to satisfy the "endless" impulse without corrupting the scoring
+mechanic it sits next to. Personal bests are keyed per `(set, duration)` pair
+(`arcadeKey` in `mastery.js`) — a 30s run and a 60s run are different
+measurements and must never shadow each other.
+
+That review also caught a shipped bug the design conversation alone would
+never have surfaced: the arcade chip never passed an item count to
+`startRound`, so every arcade round silently defaulted to a 5-item cap and
+ended in ~1.6 real seconds regardless of the clock, while the result screen
+still claimed the advertised duration. Only visible by driving the real
+menu → chip → round path — `pipeline.test.jsx`'s arcade test exists
+specifically to keep that path exercised end to end, not just the reducer in
+isolation.
 
 It sits **fully outside the adaptive engine.** It never calls `applyAnswer` —
 doing so would leak speed-pressured latencies into the number that sets the

@@ -3,7 +3,7 @@ import {
   load, save, flush, clear, sanitize, __resetStorage,
   weekId, loadWeek, saveWeek, exportBackup, importBackup,
 } from './storage'
-import { emptyState } from './mastery'
+import { emptyState, arcadeKey } from './mastery'
 
 beforeEach(() => {
   localStorage.clear()
@@ -236,39 +236,71 @@ describe('backup — the manual bridge between devices', () => {
   })
 })
 
-describe('arcade bests (v6)', () => {
-  it('migrates a v5 save with an empty arcade ledger', () => {
+describe('arcade bests (v7)', () => {
+  it('migrates a v5 save straight through to v7 with an empty arcade ledger', () => {
     __resetStorage(); localStorage.clear()
     localStorage.setItem('mc_state', JSON.stringify({
       v: 5, n: 40, f: { 'a3.4': [3, 2, 1, 0] }, gates: {},
     }))
     const s = load()
-    expect(s.v).toBe(6)
+    expect(s.v).toBe(7)
     expect(s.arcade).toEqual({})
     expect(s.f['a3.4']).toEqual([3, 2, 1, 0])   // mastery untouched by the migration
   })
 
+  it('remaps a v6 bare-setId arcade record onto the new duration-keyed shape', () => {
+    // Every v6 record was recorded under the old flat 30-second constant, so
+    // it must map straight across rather than being silently dropped.
+    __resetStorage(); localStorage.clear()
+    localStorage.setItem('mc_state', JSON.stringify({
+      v: 6, n: 40, f: {}, gates: {}, arcade: { 'addition.core': { best: 4, runs: [2, 4], at: 999 } },
+    }))
+    const s = load()
+    expect(s.v).toBe(7)
+    expect(s.arcade[arcadeKey('addition.core', 30000)]).toEqual({ best: 4, runs: [2, 4], at: 999 })
+  })
+
   it('drops an arcade record for a set that no longer exists', () => {
-    const s = sanitize({ arcade: { 'addition.core': { best: 5, runs: [5] }, 'nope.core': { best: 99, runs: [99] } } })
-    expect(s.arcade['addition.core']).toEqual({ best: 5, runs: [5], at: 0 })
-    expect(s.arcade['nope.core']).toBeUndefined()
+    const s = sanitize({ arcade: {
+      [arcadeKey('addition.core', 30000)]: { best: 5, runs: [5] },
+      [arcadeKey('nope.core', 30000)]: { best: 99, runs: [99] },
+    } })
+    expect(s.arcade[arcadeKey('addition.core', 30000)]).toEqual({ best: 5, runs: [5], at: 0 })
+    expect(s.arcade[arcadeKey('nope.core', 30000)]).toBeUndefined()
+  })
+
+  it('drops a record for a duration that is no longer offered', () => {
+    const s = sanitize({ arcade: { [arcadeKey('addition.core', 999)]: { best: 5, runs: [5] } } })
+    expect(s.arcade[arcadeKey('addition.core', 999)]).toBeUndefined()
   })
 
   it('clamps a corrupt arcade record rather than trusting it', () => {
-    const s = sanitize({ arcade: { 'addition.core': { best: -5, runs: ['x', 9999, 3] } } })
-    expect(s.arcade['addition.core'].best).toBe(0)
-    expect(s.arcade['addition.core'].runs).toEqual([0, 999, 3])
+    const key = arcadeKey('addition.core', 30000)
+    const s = sanitize({ arcade: { [key]: { best: -5, runs: ['x', 9999, 3] } } })
+    expect(s.arcade[key].best).toBe(0)
+    expect(s.arcade[key].runs).toEqual([0, 999, 3])
   })
 
   it('bounds run history the same way a fresh state does', () => {
-    const s = sanitize({ arcade: { 'addition.core': { best: 20, runs: Array(50).fill(1) } } })
-    expect(s.arcade['addition.core'].runs.length).toBeLessThanOrEqual(8)
+    const key = arcadeKey('addition.core', 30000)
+    const s = sanitize({ arcade: { [key]: { best: 20, runs: Array(50).fill(1) } } })
+    expect(s.arcade[key].runs.length).toBeLessThanOrEqual(8)
+  })
+
+  it('keeps different durations of the same set as independent records', () => {
+    const s = sanitize({ arcade: {
+      [arcadeKey('addition.core', 30000)]: { best: 12, runs: [12] },
+      [arcadeKey('addition.core', 60000)]: { best: 40, runs: [40] },
+    } })
+    expect(s.arcade[arcadeKey('addition.core', 30000)].best).toBe(12)
+    expect(s.arcade[arcadeKey('addition.core', 60000)].best).toBe(40)
   })
 
   it('round-trips through export/import', () => {
     __resetStorage(); localStorage.clear()
     let s = emptyState()
-    s = { ...s, arcade: { 'addition.core': { best: 14, runs: [10, 14], at: 12345 } } }
+    const key = arcadeKey('addition.core', 30000)
+    s = { ...s, arcade: { [key]: { best: 14, runs: [10, 14], at: 12345 } } }
     save(s, { immediate: true })
 
     const text = exportBackup()
@@ -276,6 +308,6 @@ describe('arcade bests (v6)', () => {
     expect(load().arcade).toEqual({})
 
     expect(importBackup(text).ok).toBe(true)
-    expect(load().arcade['addition.core'].best).toBe(14)
+    expect(load().arcade[key].best).toBe(14)
   })
 })

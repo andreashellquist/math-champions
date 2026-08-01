@@ -1142,3 +1142,12 @@ body::before {
   border: 2px solid rgba(255,255,255,.5);
 }
 .theme-sub { font-size: .68rem; font-weight: 400; color: #c8f0d6; }
+
+.arcade-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.arcade-chips .link-btn.tiny { margin: 0; }
