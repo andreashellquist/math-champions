@@ -454,6 +454,8 @@ export default {
     wide: 'Go wide',
     oneTwo: 'Play a one-two',
     carry: 'Carry the ball',
+    oneTwoCue: '↔ One-two with Sol',
+    carryCue: '➰ Nova carries it',
     touch: 'Clean touch—the move continues!',
     recovery: 'Recovery route found. The move is still alive.',
     finish: 'GOAL! You completed Nova’s move.',

@@ -27,9 +27,11 @@ describe('the roster', () => {
     }
   })
 
-  it('keeps prototype character Nova out of the selectable roster', () => {
+  it('keeps prototype story characters out of the selectable roster', () => {
     expect(getCharacter('nova').name).toBe('Nova')
+    expect(getCharacter('sol').name).toBe('Sol')
     expect(ROSTER_IDS).not.toContain('nova')
+    expect(ROSTER_IDS).not.toContain('sol')
   })
 })
 

@@ -603,24 +603,40 @@ export default function GameScreen() {
   )
 }
 
-function LegendPitch({ kickIdx, total, phase, route = [], keeperId, reduced, theme }) {
+export function LegendPitch({ kickIdx, total, phase, route = [], keeperId, reduced, theme }) {
   const positions = [10, 27, 45, 63, 78]
   const progress = positions[Math.min(kickIdx, positions.length - 1)]
   const active = phase === 'resolving' || phase === 'celebrating'
   const finalTouch = kickIdx >= total - 1
   const lane = route[0] === 'wide' ? 'wide' : route[0] === 'inside' ? 'inside' : 'centre'
+  const move = route[1] === 'one-two' ? 'one-two' : route[1] === 'carry' ? 'carry' : 'open'
+  // Sol is clearly ahead for the wall pass, then holds a supporting position
+  // behind Nova for the finish. Keeping the two figures apart matters at the
+  // narrow 314px game width, where a small percentage gap makes them merge.
+  const supportPosition = finalTouch ? 54 : Math.min(progress + 26, 89)
 
   return (
     <div
-      className={`legend-pitch lane-${lane}${active ? ' active' : ''}`}
-      style={{ '--legend-progress': `${progress}%` }}
+      className={`legend-pitch lane-${lane} move-${move}${active ? ' active' : ''}`}
+      style={{ '--legend-progress': `${progress}%`, '--legend-support': `${supportPosition}%` }}
     >
       <SeasonalDecoration theme={theme} />
       <div className="legend-progress-label">{t('legend.progress', { n: kickIdx + 1, total })}</div>
+      {move !== 'open' && (
+        <div className="legend-move-label">
+          {t(move === 'one-two' ? 'legend.oneTwoCue' : 'legend.carryCue')}
+        </div>
+      )}
       <div className="legend-route-line" aria-hidden="true" />
+      {move === 'one-two' && <div className="legend-return-line" aria-hidden="true" />}
       <div className="legend-defender defender-one" aria-hidden="true" />
       <div className="legend-defender defender-two" aria-hidden="true" />
-      <div className="legend-defender defender-three" aria-hidden="true" />
+      <div className={`legend-defender defender-three${move === 'carry' ? ' dribbled' : ''}`} aria-hidden="true" />
+      {move === 'one-two' && (
+        <div className="legend-teammate">
+          <Player id="sol" pose={active ? 'kick' : 'idle'} size={54} animate={!reduced} />
+        </div>
+      )}
       <div className="legend-runner">
         <Player
           id="nova"

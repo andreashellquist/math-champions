@@ -462,6 +462,8 @@ export default {
     wide: 'Gå på kanten',
     oneTwo: 'Spela vägg',
     carry: 'Driv bollen',
+    oneTwoCue: '↔ Väggspel med Sol',
+    carryCue: '➰ Nova driver själv',
     touch: 'Ren touch—draget fortsätter!',
     recovery: 'Du hittade en ny väg. Draget lever!',
     finish: 'MÅL! Du klarade Novas drag.',

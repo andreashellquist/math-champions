@@ -464,6 +464,20 @@ body::before {
   font-weight: 900;
   text-shadow: 0 2px 3px rgba(0,0,0,.65);
 }
+.legend-move-label {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  z-index: 8;
+  padding: 3px 9px;
+  border: 1px solid rgba(255,226,52,.75);
+  border-radius: 999px;
+  background: rgba(35,20,52,.82);
+  color: var(--gold);
+  font-size: .76rem;
+  font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+}
 .legend-route-line {
   position: absolute;
   left: 8%;
@@ -476,6 +490,17 @@ body::before {
 }
 .legend-pitch.lane-wide .legend-route-line { transform: rotate(-7deg); }
 .legend-pitch.lane-inside .legend-route-line { transform: rotate(5deg); }
+.legend-return-line {
+  position: absolute;
+  left: calc(var(--legend-progress) - 1%);
+  bottom: 79px;
+  width: 13%;
+  height: 30px;
+  border-top: 3px dashed rgba(255,226,52,.9);
+  border-radius: 50%;
+  transform: rotate(-13deg);
+  z-index: 3;
+}
 .legend-runner {
   position: absolute;
   left: calc(var(--legend-progress) - 36px);
@@ -485,6 +510,13 @@ body::before {
 }
 .legend-pitch.lane-wide .legend-runner { bottom: 42px; }
 .legend-pitch.lane-inside .legend-runner { bottom: 10px; }
+.legend-teammate {
+  position: absolute;
+  left: calc(var(--legend-support) - 27px);
+  bottom: 55px;
+  z-index: 5;
+  transition: left calc(var(--motion) * .45s) ease;
+}
 .legend-ball {
   position: absolute;
   left: calc(var(--legend-progress) + 12px);
@@ -495,11 +527,29 @@ body::before {
 }
 .legend-pitch.lane-wide .legend-ball { bottom: 50px; }
 .legend-pitch.lane-inside .legend-ball { bottom: 18px; }
-.legend-pitch.active .legend-ball { animation: legend-touch calc(var(--motion) * .42s) ease-out; }
+.legend-pitch.active.move-open .legend-ball { animation: legend-touch calc(var(--motion) * .42s) ease-out; }
 @keyframes legend-touch {
   0% { transform: translateX(-18px) rotate(0); }
   70% { transform: translate(22px,-12px) rotate(280deg); }
   100% { transform: translateX(34px) rotate(400deg); }
+}
+@keyframes legend-one-two {
+  0% { transform: translateX(-10px) rotate(0); }
+  45% { transform: translate(58px,-24px) rotate(300deg); }
+  72% { transform: translate(18px,-10px) rotate(470deg); }
+  100% { transform: translateX(34px) rotate(620deg); }
+}
+@keyframes legend-carry {
+  0% { transform: translateX(-8px) rotate(0); }
+  35% { transform: translate(9px,-7px) rotate(120deg); }
+  68% { transform: translate(20px,1px) rotate(250deg); }
+  100% { transform: translate(31px,-5px) rotate(390deg); }
+}
+.legend-pitch.active.move-one-two .legend-ball {
+  animation: legend-one-two calc(var(--motion) * .72s) ease-in-out;
+}
+.legend-pitch.active.move-carry .legend-ball {
+  animation: legend-carry calc(var(--motion) * .62s) ease-out;
 }
 .legend-defender {
   position: absolute;
@@ -514,6 +564,10 @@ body::before {
 .defender-one { left: 30%; bottom: 18px; }
 .defender-two { left: 51%; bottom: 72px; }
 .defender-three { left: 67%; bottom: 24px; }
+.legend-pitch.move-carry.active .defender-three.dribbled {
+  transform: translate(18px,7px) rotate(24deg);
+  opacity: .55;
+}
 .legend-goal { position: absolute; right: 2%; bottom: 10px; z-index: 5; }
 .legend-choice {
   width: 100%;
