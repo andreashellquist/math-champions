@@ -228,7 +228,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-301 tests. The valuable ones are property-based: every hint is checked for
+303 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
@@ -290,9 +290,12 @@ recovery flow, so the move remains finishable without pretending the first
 answer was correct. The mode contributes honest answer evidence to mastery but
 does not add records, badges, unlocks, or a new save format.
 
-Nova is kept outside the selectable real-player roster. That lets the prototype
-test whether a connected, authored football sequence is meaningfully different
-from arcade before taking on player-likeness or licensing work.
+The second choice is visible rather than ceremonial: a one-two brings fictional
+teammate Sol into a pass-return scene, while carrying keeps Nova alone and moves
+the beaten defender aside. Nova and Sol stay outside the selectable real-player
+roster. That lets the prototype test whether a connected, authored football
+sequence is meaningfully different from arcade before taking on player-likeness
+or licensing work.
 
 ## Snabbskott (arcade)
 

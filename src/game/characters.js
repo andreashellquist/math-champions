@@ -267,6 +267,18 @@ export const SPECIAL_CHARACTERS = {
     },
     gk: GK_DEFAULT,
   },
+  sol: {
+    id: 'sol', name: 'Sol', short: 'Sol', flag: '☀️',
+    hair: 'buzz', hairColor: '#4A3624', skin: '#C89468',
+    number: 10, celebration: 'arms-wide', breathe: 2.9,
+    kits: {
+      home: { shirt: '#5A2D82', accent: '#FFE234', pattern: 'sash',
+        shorts: '#132A20', socks: '#5A2D82', trim: '#FFE234', numberColor: '#FFE234' },
+      nation: { shirt: '#5A2D82', accent: '#FFE234', pattern: 'sash',
+        shorts: '#132A20', socks: '#5A2D82', trim: '#FFE234', numberColor: '#FFE234' },
+    },
+    gk: GK_DEFAULT,
+  },
 }
 
 /**

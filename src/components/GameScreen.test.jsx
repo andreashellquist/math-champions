@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useEffect } from 'react'
-import GameScreen from './GameScreen'
+import GameScreen, { LegendPitch } from './GameScreen'
 import { GameProvider, useGame } from '../state/GameContext'
 import { __resetStorage } from '../game/storage'
 import { setLocale } from '../i18n'
@@ -92,6 +92,36 @@ describe('kick pacing', () => {
     answerCorrectly()
     act(() => { vi.advanceTimersByTime(340) })
     expect(questionText()).toBe(first)
+  })
+})
+
+describe('Legenddraget route presentation', () => {
+  it('turns the one-two choice into a pass-return scene with Sol', () => {
+    render(
+      <LegendPitch
+        kickIdx={3} total={5} phase="resolving" route={['inside', 'one-two']}
+        keeperId="haaland" reduced={false} theme="spring"
+      />,
+    )
+
+    expect(document.querySelector('.legend-pitch.move-one-two')).toBeTruthy()
+    expect(document.querySelector('.legend-return-line')).toBeTruthy()
+    expect(document.querySelector('[aria-label="Sol"]')).toBeTruthy()
+    expect(document.querySelector('.legend-move-label')?.textContent).toContain('Väggspel')
+  })
+
+  it('turns the carry choice into a solo dribble past a displaced defender', () => {
+    render(
+      <LegendPitch
+        kickIdx={3} total={5} phase="resolving" route={['wide', 'carry']}
+        keeperId="haaland" reduced={false} theme="spring"
+      />,
+    )
+
+    expect(document.querySelector('.legend-pitch.move-carry')).toBeTruthy()
+    expect(document.querySelector('.defender-three.dribbled')).toBeTruthy()
+    expect(document.querySelector('[aria-label="Sol"]')).toBeNull()
+    expect(document.querySelector('.legend-move-label')?.textContent).toContain('driver själv')
   })
 })
 
