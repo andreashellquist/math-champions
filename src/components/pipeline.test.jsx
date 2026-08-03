@@ -274,6 +274,19 @@ describe('create-a-player, through the real component tree', () => {
   })
 })
 
+describe('the grown-up view, through the real component tree', () => {
+  it('is discoverable from the menu and has a working return path', () => {
+    render(<App />)
+    click(button('För vuxna'))
+
+    expect(document.querySelector('h1')?.textContent).toContain('För vuxna')
+    expect(button('Spara fil')).toBeTruthy()
+
+    click(button('Meny'))
+    expect(document.querySelector('h1')?.textContent).toContain('Mattemästarna')
+  })
+})
+
 describe('the first round of a session is the short one', () => {
   it('opens with three kicks, not five', () => {
     // Task initiation is priced by the size of the commitment, so the round

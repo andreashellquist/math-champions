@@ -21,6 +21,7 @@ export default {
     play: 'Play',
     changePlayer: '👕 Change player',
     stats: '🏆 My stats',
+    grownUps: '👨‍👩‍👧 For grown-ups',
     goals: '⚽ Goals',
     factsKnown: '🧠 Facts known',
     soundOn: '🔊 Sound on',

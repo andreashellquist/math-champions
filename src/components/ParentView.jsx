@@ -13,7 +13,7 @@ import { useRef, useState } from 'react'
 const OP_OF_CHAR = { a: 'addition', s: 'subtraction', m: 'multiplication', d: 'division' }
 
 /**
- * Parent / teacher view, behind `?parent=1`.
+ * Parent / teacher view, reachable from the menu or directly via `?parent=1`.
  *
  * Every string is written assuming the child is reading over a shoulder,
  * because they will be. The rules this screen obeys:
@@ -28,8 +28,8 @@ const OP_OF_CHAR = { a: 'addition', s: 'subtraction', m: 'multiplication', d: 'd
  *    and some will start drilling the timed mode, which is the exact failure
  *    this design avoids.
  */
-export default function ParentView() {
-  const { state } = useGame()
+export default function ParentView({ standalone = false }) {
+  const { state, dispatch } = useGame()
   const { t } = useTranslation()
   const { mastery } = state
 
@@ -194,6 +194,13 @@ export default function ParentView() {
       </div>
 
       <p className="hint-note">{t('parent.footer')}</p>
+      {standalone ? (
+        <a className="btn btn-white" href={window.location.pathname}>{t('common.menu')}</a>
+      ) : (
+        <button className="btn btn-white" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'menu' })}>
+          {t('common.menu')}
+        </button>
+      )}
     </div>
   )
 }

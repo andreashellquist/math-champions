@@ -118,6 +118,12 @@ export default function MenuScreen() {
       >
         {state.settings.sound ? t('menu.soundOn') : t('menu.soundOff')}
       </button>
+      <button
+        className="link-btn subtle"
+        onClick={() => dispatch({ type: 'NAVIGATE', screen: 'parent' })}
+      >
+        {t('menu.grownUps')}
+      </button>
     </div>
   )
 }

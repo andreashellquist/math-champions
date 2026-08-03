@@ -3,6 +3,8 @@
 A soccer-themed maths game for ages 7–10. Answer a question, take a penalty.
 Swedish by default, English available.
 
+Requires Node.js 20.19 or newer.
+
 ```bash
 npm install
 npm run dev
@@ -196,10 +198,13 @@ best score.
 
 ## For grown-ups
 
-`?parent=1` shows what is actually happening: facts known straight away,
+The subtle **For grown-ups** link on the main menu shows what is actually
+happening: facts known straight away,
 first-try accuracy per operation as a count of N, a speed *direction* (never a
 figure), which facts are being worked on with the strategy the app teaches
 attached, and the dominant error pattern made actionable.
+
+`?parent=1` remains available as a direct bookmark for adults and teachers.
 
 Written assuming the child reads it over a shoulder — no red, no norms, no
 comparison to other children, no percentages as headlines, and gaps stated as
@@ -223,13 +228,16 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-300 tests. The valuable ones are property-based: every hint is checked for
+301 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
 verify the ladder paces correctly for both a strong and a struggling child.
 
 Regression tests exist for each fixed bug, named after the bug.
+
+GitHub Actions runs lint, the full test suite, and the production PWA/offline
+verification on every pull request and every push to `master`.
 
 ---
 

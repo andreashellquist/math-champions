@@ -29,6 +29,7 @@ export default {
     play: 'Spela',
     changePlayer: '👕 Byt spelare',
     stats: '🏆 Min statistik',
+    grownUps: '👨‍👩‍👧 För vuxna',
     goals: '⚽ Mål',
     factsKnown: '🧠 Kan utantill',
     soundOn: '🔊 Ljud på',
