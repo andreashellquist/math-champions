@@ -18,7 +18,16 @@ import { weekId, loadWeek, saveWeek } from '../game/storage'
 export default function WeeklyCard({ onClose }) {
   const { state } = useGame()
   const { t } = useTranslation()
-  const [delta, setDelta] = useState(null)
+  const [snapshot] = useState(() => {
+    const id = weekId()
+    const prev = loadWeek()
+    const now = masteredCount(state.mastery)
+    if (!prev || prev.id !== id) {
+      return { delta: null, next: { id, mastered: now, shown: true }, close: true }
+    }
+    if (prev.shown) return { delta: null, next: null, close: true }
+    return { delta: Math.max(0, now - prev.mastered), next: { ...prev, shown: true }, close: false }
+  })
   /* Runs exactly once. Without this the effect re-fires (the parent passes an
      inline onClose, so its identity changes every render), reads back its own
      `shown: true`, and dismisses the card it just opened. */
@@ -28,31 +37,18 @@ export default function WeeklyCard({ onClose }) {
     if (done.current) return
     done.current = true
 
-    const id = weekId()
-    const prev = loadWeek()
-    const now = masteredCount(state.mastery)
+    if (snapshot.next) saveWeek(snapshot.next)
+    if (snapshot.close) onClose?.()
+  }, [snapshot, onClose])
 
-    if (!prev || prev.id !== id) {
-      // New week: bank the baseline. Nothing to show yet.
-      saveWeek({ id, mastered: now, shown: true })
-      onClose?.()
-      return
-    }
-    if (prev.shown) { onClose?.(); return }
-
-    setDelta(Math.max(0, now - prev.mastered))
-    saveWeek({ ...prev, shown: true })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  if (delta === null) return null
+  if (snapshot.delta === null) return null
 
   return (
     <div className="weekly-card" role="dialog" aria-label={t('week.title')}>
       <h2 className="result-title">{t('week.title')}</h2>
-      <p className="week-big">{delta}</p>
+      <p className="week-big">{snapshot.delta}</p>
       <p className="result-msg">
-        {delta > 0 ? t('week.gained', { n: delta }) : t('week.thin')}
+        {snapshot.delta > 0 ? t('week.gained', { n: snapshot.delta }) : t('week.thin')}
       </p>
       <button className="btn btn-gold" onClick={onClose}>{t('week.ok')}</button>
     </div>

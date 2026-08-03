@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, act } from '@testing-library/react'
+import { useEffect } from 'react'
 import GameScreen from './GameScreen'
 import { GameProvider, useGame } from '../state/GameContext'
 import { __resetStorage } from '../game/storage'
@@ -36,11 +37,11 @@ function renderGame() {
 
 /** Starts a round, then renders the real GameScreen */
 function Harness() {
-  const g = useGame()
-  if (!g.state.round) {
-    g.startRound('addition', { mode: 'training', kicks: 5 })
-    return null
-  }
+  const { state, startRound } = useGame()
+  useEffect(() => {
+    if (!state.round) startRound('addition', { mode: 'training', kicks: 5 })
+  }, [state.round, startRound])
+  if (!state.round) return null
   return <GameScreen />
 }
 

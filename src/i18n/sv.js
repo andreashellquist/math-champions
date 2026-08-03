@@ -69,8 +69,11 @@ export default {
       afro: 'Afro',
     },
     hairColorLabel: 'Hårfärg',
+    hairColorChoice: 'Hårfärg {n} av {total}',
     skinLabel: 'Hudton',
+    skinChoice: 'Hudton {n} av {total}',
     kitLabel: 'Matchtröja',
+    kitChoice: 'Matchtröja {n} av {total}',
     numberLabel: 'Tröjnummer',
     save: '✓ Spara',
     remove: 'Ta bort min spelare',
@@ -111,6 +114,10 @@ export default {
     resultGoal: 'mål',
     resultRebound: 'returmål',
     resultMiss: 'räddad',
+  },
+
+  player: {
+    goalkeeper: 'målvakt',
   },
 
   result: {
@@ -419,6 +426,12 @@ export default {
   },
 
   arcade: {
+    title: "Snabbskott",
+    subtitle: "Välj vilka tal du vill köra och sedan tempo.",
+    open: "⚡ Snabbskott",
+    coreSet: "Grundtal",
+    fullSet: "Hela tabellen",
+    factCount: "{n} tal",
     // The duration is on the chip itself — it must never be a surprise a
     // child discovers once the clock is already running.
     chip: "⚡ Snabbskott · {s} sek",
@@ -435,6 +448,26 @@ export default {
     stripLabel: "Dina senaste resultat",
     bestLabel: "Ditt bästa: {n}",
     checkNext: "Kolla dessa till nästa gång:",
+    timeRemaining: "{s} sekunder kvar",
+  },
+
+  legend: {
+    title: 'Legenddraget · Prototyp',
+    blurb: 'Bygg ett drag i fem touch med Nova. Ingen klocka—dina val byter väg, inte matte.',
+    start: 'Starta draget',
+    progress: 'Touch {n} av {total}',
+    choose: 'Välj nästa väg',
+    inside: 'Vänd inåt',
+    wide: 'Gå på kanten',
+    oneTwo: 'Spela vägg',
+    carry: 'Driv bollen',
+    touch: 'Ren touch—draget fortsätter!',
+    recovery: 'Du hittade en ny väg. Draget lever!',
+    finish: 'MÅL! Du klarade Novas drag.',
+    completed: 'Novas drag är klart!',
+    completedMsg: 'Fem touch, två vägval och ett avslut.',
+    firstTry: '{n} touch satt direkt.',
+    practiceNext: 'De här är redo för en titt till:',
   },
 
   gate: {

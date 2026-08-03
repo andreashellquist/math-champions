@@ -11,7 +11,7 @@ export default function UnlockToast({ message }) {
   const [shown, setShown] = useState(false)
 
   useEffect(() => {
-    if (!message) { setShown(false); return }
+    if (!message) return
     const id = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)))
     return () => cancelAnimationFrame(id)
   }, [message])

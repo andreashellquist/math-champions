@@ -64,7 +64,7 @@ function newlyUnlocked(before, after) {
  * the reveal entirely when a requeue can't fire.
  */
 function resolveAsMiss(state, r, diagnosis, { requeue }) {
-  const mastery = applyAnswer(state.mastery, {
+  let mastery = applyAnswer(state.mastery, {
     fact: r.fact, correct: false, latencyMs: 0,
     errorFamily: diagnosis?.family ?? null,
     noDemote: r.mode === 'gate',
@@ -73,6 +73,10 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
     r.fact.perFact ? r.fact.key : r.fact.strand
   ]?.[0] ?? 0
   const trajectory = trajectoryFor(r.kickIdx, r.question.ans)
+  const legendFinal = r.mode === 'legend' && r.kickIdx >= (r.totalKicks ?? TOTAL_KICKS) - 1
+  if (legendFinal) {
+    mastery = { ...mastery, agg: { ...mastery.agg, goals: mastery.agg.goals + 1 } }
+  }
 
   let queue = r.queue
   if (requeue) {
@@ -91,8 +95,11 @@ function resolveAsMiss(state, r, diagnosis, { requeue }) {
       queue,
       phase: 'resolving',
       streak: 0,
+      goals: r.goals + (legendFinal ? 1 : 0),
       brainPoints: r.brainPoints + 1,
-      results: [...r.results, 'miss'],
+      results: [...r.results, r.mode === 'legend'
+        ? (legendFinal ? 'recovery-goal' : 'recovery')
+        : 'miss'],
       missedKeys: [...(r.missedKeys ?? []), r.fact.key],
       diagnosis,
       requeued: requeue,
@@ -161,6 +168,7 @@ export function reducer(state, action) {
           clockOff: false,
           askedAt: action.startedAt,
           suddenDeath: false,
+          legendRoute: [],
         },
       }
 
@@ -256,6 +264,8 @@ export function reducer(state, action) {
       const firstTry = r.phase === 'asking'
       const scored = true
       const trajectory = trajectoryFor(r.kickIdx, question.ans)
+      const legendFinal = r.mode === 'legend' && r.kickIdx >= (r.totalKicks ?? TOTAL_KICKS) - 1
+      const earnsGoal = r.mode !== 'legend' || legendFinal
 
       const mastery = applyAnswer(state.mastery, {
         fact,
@@ -271,7 +281,9 @@ export function reducer(state, action) {
       const beforeCorrect = state.mastery.agg.correct
       const unlocks = firstTry && !timedOut ? newlyUnlocked(beforeCorrect, mastery.agg.correct) : []
 
-      const outcome = timedOut ? 'timeout-goal' : firstTry ? 'goal' : 'rebound'
+      const outcome = r.mode === 'legend'
+        ? (legendFinal ? (firstTry ? 'goal' : 'rebound') : (firstTry ? 'touch' : 'recovery'))
+        : timedOut ? 'timeout-goal' : firstTry ? 'goal' : 'rebound'
       const streak = firstTry && !timedOut ? r.streak + 1 : 0
 
       return {
@@ -280,7 +292,7 @@ export function reducer(state, action) {
           ...mastery,
           agg: {
             ...mastery.agg,
-            goals: mastery.agg.goals + 1,
+            goals: mastery.agg.goals + (earnsGoal ? 1 : 0),
             bestStreak: Math.max(mastery.agg.bestStreak, streak),
           },
         },
@@ -291,7 +303,7 @@ export function reducer(state, action) {
           ...r,
           phase: 'resolving',
           chosen: action.value,
-          goals: r.goals + 1,
+          goals: r.goals + (earnsGoal ? 1 : 0),
           streak,
           brainPoints: r.brainPoints + (firstTry ? 0 : 1),
           results: [...r.results, outcome],
@@ -337,6 +349,12 @@ export function reducer(state, action) {
       const r = state.round
       if (!r || r.phase !== 'resolving') return state
       return { ...state, round: { ...r, phase: 'celebrating' } }
+    }
+
+    case 'SHOW_LEGEND_CHOICE': {
+      const r = state.round
+      if (!r || r.mode !== 'legend' || r.phase !== 'celebrating') return state
+      return { ...state, round: { ...r, phase: 'route-choice' } }
     }
 
     /* ── Next kick, or end of round ── */
@@ -430,6 +448,9 @@ export function reducer(state, action) {
           // the old items already answered stay in place for the requeue/role
           // bookkeeping other modes rely on.
           queue: action.extraQueue ? [...r.queue, ...action.extraQueue] : r.queue,
+          legendRoute: action.legendRoute
+            ? [...(r.legendRoute ?? []), action.legendRoute]
+            : (r.legendRoute ?? []),
           suddenDeath: r.suddenDeath || enteringSuddenDeath,
           kickIdx: nextIdx,
           question: action.question,

@@ -61,8 +61,11 @@ export default {
       afro: 'Afro',
     },
     hairColorLabel: 'Hair colour',
+    hairColorChoice: 'Hair colour {n} of {total}',
     skinLabel: 'Skin tone',
+    skinChoice: 'Skin tone {n} of {total}',
     kitLabel: 'Kit',
+    kitChoice: 'Kit {n} of {total}',
     numberLabel: 'Shirt number',
     save: '✓ Save',
     remove: 'Remove my player',
@@ -103,6 +106,10 @@ export default {
     resultGoal: 'goal',
     resultRebound: 'rebound goal',
     resultMiss: 'saved',
+  },
+
+  player: {
+    goalkeeper: 'goalkeeper',
   },
 
   result: {
@@ -411,6 +418,12 @@ export default {
   },
 
   arcade: {
+    title: "Quick Shots",
+    subtitle: "Pick a fact set, then choose your pace.",
+    open: "⚡ Quick Shots",
+    coreSet: "Core facts",
+    fullSet: "Full table",
+    factCount: "{n} facts",
     // The duration is on the chip itself — it must never be a surprise a
     // child discovers once the clock is already running.
     chip: "⚡ Quick Shots · {s}s",
@@ -427,6 +440,26 @@ export default {
     stripLabel: "Your recent runs",
     bestLabel: "Your best: {n}",
     checkNext: "Check these next time:",
+    timeRemaining: "{s} seconds left",
+  },
+
+  legend: {
+    title: 'Legend Move · Prototype',
+    blurb: 'Build one five-touch move with Nova. No clock—your choices change the route, not the maths.',
+    start: 'Start the move',
+    progress: 'Touch {n} of {total}',
+    choose: 'Choose the next route',
+    inside: 'Turn inside',
+    wide: 'Go wide',
+    oneTwo: 'Play a one-two',
+    carry: 'Carry the ball',
+    touch: 'Clean touch—the move continues!',
+    recovery: 'Recovery route found. The move is still alive.',
+    finish: 'GOAL! You completed Nova’s move.',
+    completed: 'Nova’s move complete!',
+    completedMsg: 'Five connected touches, two route choices, one finish.',
+    firstTry: '{n} touches came straight away.',
+    practiceNext: 'These are ready for another look:',
   },
 
   gate: {

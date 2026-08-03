@@ -54,6 +54,59 @@ describe('input guarding', () => {
   })
 })
 
+describe('Legenddraget prototype', () => {
+  it('records an intermediate answer as a touch, not a goal', () => {
+    const s0 = roundInProgress({ mode: 'legend', totalKicks: 5, kickIdx: 0 })
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 2000 })
+
+    expect(s1.round.results).toEqual(['touch'])
+    expect(s1.round.goals).toBe(0)
+    expect(s1.mastery.agg.goals).toBe(0)
+    expect(s1.mastery.agg.correct).toBe(1) // still honest adaptive practice
+  })
+
+  it('pauses at a route choice and stores only its cosmetic route', () => {
+    let s = roundInProgress({ mode: 'legend', totalKicks: 5, kickIdx: 0 })
+    s = reducer(s, { type: 'ANSWER', value: s.round.question.ans, at: 2000 })
+    s = reducer(s, { type: 'CELEBRATE' })
+    s = reducer(s, { type: 'SHOW_LEGEND_CHOICE' })
+    expect(s.round.phase).toBe('route-choice')
+
+    const fact = QUEUE_FACTS[1]
+    const question = buildQuestion({ fact, format: 'standard', optionCount: 3, rng })
+    s = reducer(s, { type: 'ADVANCE', fact, question, legendRoute: 'wide', at: 3000 })
+    expect(s.round.phase).toBe('asking')
+    expect(s.round.legendRoute).toEqual(['wide'])
+    expect(s.round.kickIdx).toBe(1)
+  })
+
+  it('awards the one guaranteed goal only on the fifth touch', () => {
+    const s0 = roundInProgress({
+      mode: 'legend', totalKicks: 5, kickIdx: 4,
+      results: ['touch', 'touch', 'recovery', 'touch'],
+    })
+    const s1 = reducer(s0, { type: 'ANSWER', value: s0.round.question.ans, at: 2000 })
+    expect(s1.round.results.at(-1)).toBe('goal')
+    expect(s1.round.goals).toBe(1)
+    expect(s1.mastery.agg.goals).toBe(1)
+  })
+
+  it('still reaches the guaranteed finish after the full correction flow', () => {
+    let s = roundInProgress({
+      mode: 'legend', totalKicks: 5, kickIdx: 4,
+      results: ['touch', 'touch', 'recovery', 'touch'],
+    })
+    const [wrong1, wrong2] = s.round.question.opts.filter(x => x !== s.round.question.ans)
+    s = reducer(s, { type: 'ANSWER', value: wrong1, at: 2000 })
+    s = reducer(s, { type: 'ANSWER', value: wrong2, at: 2400 })
+    s = reducer(s, { type: 'ACKNOWLEDGE_REVEAL' })
+
+    expect(s.round.results.at(-1)).toBe('recovery-goal')
+    expect(s.round.goals).toBe(1)
+    expect(s.mastery.f[FACT.key][3]).toBe(1)
+  })
+})
+
 describe('the rebound flow', () => {
   it('parries a first miss without revealing the answer or gloating', () => {
     const s0 = roundInProgress()

@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom/client'
 // Self-hosted rather than fetched from Google Fonts: a cross-origin webfont
 // is a hard network dependency, so offline the app would silently fall back
 // to a generic sans — which defeats the point of shipping it as a PWA.
-import '@fontsource/nunito/400.css'
-import '@fontsource/nunito/700.css'
-import '@fontsource/nunito/900.css'
+// Only the Latin subset is needed for Swedish and English. The unscoped
+// imports also bundled Cyrillic and Vietnamese files into every offline build.
+import '@fontsource/nunito/latin-400.css'
+import '@fontsource/nunito/latin-700.css'
+import '@fontsource/nunito/latin-900.css'
 import './App.css'
 import './styles/player.css'
 

@@ -252,6 +252,23 @@ export const CHARACTERS = {
 export const ROSTER = Object.values(CHARACTERS).sort((a, b) => a.short.localeCompare(b.short, 'sv'))
 export const ROSTER_IDS = ROSTER.map(c => c.id)
 
+/** Prototype-only story characters. They render through Player but do not
+    enter the selectable roster or become something a child must unlock. */
+export const SPECIAL_CHARACTERS = {
+  nova: {
+    id: 'nova', name: 'Nova', short: 'Nova', flag: '✨',
+    hair: 'curls', hairColor: '#241A14', skin: '#D9A374',
+    number: 8, celebration: 'arms-wide', breathe: 3.1,
+    kits: {
+      home: { shirt: '#5A2D82', accent: '#FFE234', pattern: 'sash',
+        shorts: '#132A20', socks: '#5A2D82', trim: '#FFE234', numberColor: '#FFE234' },
+      nation: { shirt: '#5A2D82', accent: '#FFE234', pattern: 'sash',
+        shorts: '#132A20', socks: '#5A2D82', trim: '#FFE234', numberColor: '#FFE234' },
+    },
+    gk: GK_DEFAULT,
+  },
+}
+
 /**
  * Create-a-player: a curated palette rather than a free colour picker.
  *
@@ -291,7 +308,8 @@ export function buildCustomCharacter(cp) {
   if (!cp) return null
   const kit = KIT_PRESETS.find(k => k.id === cp.kitId) ?? KIT_PRESETS[0]
   return {
-    id: 'custom', name: cp.name, short: cp.name, flag: '🇸🇪',
+    // A child-created player does not imply a nationality they never chose.
+    id: 'custom', name: cp.name, short: cp.name, flag: '⭐',
     hair: cp.hair, hairColor: cp.hairColor, skin: cp.skin,
     number: cp.number, celebration: 'arms-wide', breathe: 3.2,
     kits: { home: kit, nation: kit },
@@ -311,7 +329,7 @@ export function setCustomCharacter(customPlayer) {
 /** Rivals are keeper-only characters, but render through the same component */
 export function getCharacter(id) {
   if (id === 'custom' && customCharacter) return customCharacter
-  return CHARACTERS[id] ?? RIVALS[id] ?? CHARACTERS.haaland
+  return CHARACTERS[id] ?? SPECIAL_CHARACTERS[id] ?? RIVALS[id] ?? CHARACTERS.haaland
 }
 
 /**

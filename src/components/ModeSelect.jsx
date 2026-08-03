@@ -8,8 +8,6 @@ import {
 import { STRANDS_BY_OP } from '../game/facts'
 import { computeTimeLimit } from '../hooks/useDeadline'
 import { clockScaleFor } from '../game/rivals'
-import { arcadeSetsFor } from '../game/arcadeSets'
-import { ARCADE_DURATIONS } from '../game/mastery'
 
 /**
  * Shootout is offered only to a child who already has the facts — it's a
@@ -59,14 +57,10 @@ export default function ModeSelect() {
     startRound(op, { mode, timerMs })
   }
 
-  // Snabbskott: a fixed, published duration — no `computeTimeLimit`, no rival
-  // scaling. Comparability across runs is the entire point of the mode, so
-  // nothing here personalises or varies the clock.
-  const playArcade = (set, durationMs) => startRound(set.op, { mode: 'arcade', setId: set.id, timerMs: durationMs })
-  // No clock, never scored — see mastery.js's Snabbskott section. This is the
-  // honest way to give a child an actually-endless run without a stopping tap
-  // that also risks setting (or missing) a personal best.
-  const playFree = set => startRound(set.op, { mode: 'arcade', setId: set.id, timerMs: null })
+  const openArcade = op => {
+    dispatch({ type: 'SELECT_OP', op })
+    dispatch({ type: 'NAVIGATE', screen: 'arcade' })
+  }
 
   return (
     <div className="screen">
@@ -101,34 +95,32 @@ export default function ModeSelect() {
                 </button>
               )}
 
-              {/* Snabbskott: always reachable once the operation is unlocked —
-                  there's no accuracy gate, because unlike Shootout this mode
-                  never feeds the adaptive engine, so there's no bad evidence
-                  to protect it from. Same visual weight as Shootout: small
-                  chips, never the gold primary action, never reachable from
-                  one-tap start. The duration is on the chip itself — it must
-                  never be a surprise a child discovers once the clock is
-                  already running. */}
-              {unlocked && arcadeSetsFor(op)[0] && (
-                <div className="arcade-chips">
-                  {ARCADE_DURATIONS.map(ms => (
-                    <button
-                      key={ms}
-                      className="shootout-chip"
-                      onClick={() => playArcade(arcadeSetsFor(op)[0], ms)}
-                    >
-                      {t('arcade.chip', { s: ms / 1000 })}
-                    </button>
-                  ))}
-                  <button className="link-btn tiny" onClick={() => playFree(arcadeSetsFor(op)[0])}>
-                    {t('arcade.freeChip')}
-                  </button>
-                </div>
+              {/* One entry opens the focused set/duration screen. Keeping the
+                  choices out of this already dense grid also makes the full
+                  sets reachable without turning each operation into a matrix. */}
+              {unlocked && (
+                <button className="shootout-chip" onClick={() => openArcade(op)}>
+                  {t('arcade.open')}
+                </button>
               )}
             </div>
           )
         })}
       </div>
+
+      <section className="legend-offer" aria-labelledby="legend-offer-title">
+        <div className="legend-offer-player" aria-hidden="true">✨</div>
+        <div>
+          <h2 id="legend-offer-title">{t('legend.title')}</h2>
+          <p>{t('legend.blurb')}</p>
+        </div>
+        <button
+          className="btn btn-gold"
+          onClick={() => startRound('addition', { mode: 'legend', kicks: 5 })}
+        >
+          {t('legend.start')}
+        </button>
+      </section>
 
       {/* The derby: the rival picks the questions, never the outcome. Only
           offered once he has something to pick *from* — on a fresh profile

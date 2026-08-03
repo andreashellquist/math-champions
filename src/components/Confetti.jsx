@@ -1,9 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 const COLORS = ['#ffe234', '#ff6b6b', '#4ecdc4', '#45b7d1', '#a8e6cf', '#dda0dd', '#ffa500']
 
-function rand(a, b) {
-  return Math.floor(Math.random() * (b - a + 1)) + a
+/** Stable pseudo-random fraction derived from the burst and piece ids. */
+function fraction(trigger, index, salt) {
+  const text = `${trigger}:${index}:${salt}`
+  let h = 2166136261
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619)
+  return (h >>> 0) / 4294967296
+}
+
+function rand(trigger, index, salt, a, b) {
+  return Math.floor(fraction(trigger, index, salt) * (b - a + 1)) + a
 }
 
 /**
@@ -16,24 +24,24 @@ function rand(a, b) {
  * supposed to remove the previous burst's 28 DOM nodes.
  */
 export default function Confetti({ trigger, count = 28 }) {
-  const [pieces, setPieces] = useState([])
+  const [visible, setVisible] = useState(Boolean(trigger))
+  const pieces = useMemo(() => !trigger ? [] : Array.from({ length: count }, (_, i) => ({
+    id:    `${trigger}-${i}`,
+    left:  fraction(trigger, i, 1) * 100,
+    color: COLORS[Math.floor(fraction(trigger, i, 2) * COLORS.length)],
+    dur:   (fraction(trigger, i, 3) * 1.2 + 1.3).toFixed(2),
+    delay: (fraction(trigger, i, 4) * 0.45).toFixed(2),
+    size:  rand(trigger, i, 5, 7, 14),
+    round: fraction(trigger, i, 6) > 0.5,
+  })), [trigger, count])
 
   useEffect(() => {
     if (!trigger) return
-    setPieces(Array.from({ length: count }, (_, i) => ({
-      id:    `${trigger}-${i}`,
-      left:  Math.random() * 100,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      dur:   (Math.random() * 1.2 + 1.3).toFixed(2),
-      delay: (Math.random() * 0.45).toFixed(2),
-      size:  rand(7, 14),
-      round: Math.random() > 0.5,
-    })))
-    const timer = setTimeout(() => setPieces([]), 3000)
+    const timer = setTimeout(() => setVisible(false), 3000)
     return () => clearTimeout(timer)
-  }, [trigger, count])
+  }, [trigger])
 
-  if (pieces.length === 0) return null
+  if (!visible || pieces.length === 0) return null
 
   return (
     <div className="confetti-layer" aria-hidden="true">

@@ -13,6 +13,7 @@ npm run dev
 | `npm run dev` | dev server |
 | `npm run build` | production build (PWA, installable, works offline) |
 | `npm test` | Vitest |
+| `npm run test:pwa` | production build + offline-shell/precache verification |
 | `npm run lint` | ESLint |
 | `npm run icons` | regenerate PWA icons from `public/icon.svg` |
 | `?sheet=1` | dev-only character contact sheet |
@@ -222,7 +223,7 @@ disables animation but keeps poses, which carry meaning. No red anywhere.
 npm test
 ```
 
-265 tests. The valuable ones are property-based: every hint is checked for
+300 tests. The valuable ones are property-based: every hint is checked for
 arithmetic truthfulness across the whole fact space in both languages, every
 generated question is checked for guard compliance across ~2000 items, and the
 mastery engine is exercised by simulating children of different ability to
@@ -270,6 +271,20 @@ gradient in one place — a genuinely bright winter-white pitch would mean
 re-auditing every light-on-dark string in the app, so winter is a night match
 under floodlights with snow falling instead of a literal white field. Every
 theme is measured to clear 3:1 contrast against both ends of its gradient.
+
+## Legenddraget (prototype)
+
+An intentionally small alternative to Snabbskott: one fictional playmaker,
+Nova, builds a five-touch move through untimed addition questions. Two route
+choices change the presentation but never the arithmetic or difficulty, and
+only the fifth touch produces a goal. Wrong answers use the normal hint and
+recovery flow, so the move remains finishable without pretending the first
+answer was correct. The mode contributes honest answer evidence to mastery but
+does not add records, badges, unlocks, or a new save format.
+
+Nova is kept outside the selectable real-player roster. That lets the prototype
+test whether a connected, authored football sequence is meaningfully different
+from arcade before taking on player-likeness or licensing work.
 
 ## Snabbskott (arcade)
 

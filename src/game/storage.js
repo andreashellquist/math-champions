@@ -19,7 +19,9 @@ import {
 import { RIVAL_IDS } from './rivals'
 import { THEMES } from './theme'
 import { ARCADE_SETS } from './arcadeSets'
-import { HAIR_STYLES, HAIR_COLORS, SKIN_TONES, KIT_PRESETS } from './characters'
+import { ALL_FACTS, STRAND_BY_ID } from './facts'
+import { HAIR_STYLES, HAIR_COLORS, SKIN_TONES, KIT_PRESETS, ROSTER_IDS } from './characters'
+import { LOCALES } from '../i18n'
 
 const KEY = 'mc_state'
 const LEGACY_CORRECT = 'mc_correct'
@@ -74,17 +76,17 @@ function cleanRecord(rec) {
   ]
 }
 
-function cleanBucket(obj, maxEntries) {
+const KNOWN_FACT_KEYS = new Set(ALL_FACTS.map(f => f.key))
+const KNOWN_STRAND_KEYS = new Set(Object.keys(STRAND_BY_ID).filter(id => !STRAND_BY_ID[id].perFact))
+
+function cleanBucket(obj, allowedKeys) {
   const out = {}
   if (!obj || typeof obj !== 'object') return out
-  let n = 0
   for (const [k, v] of Object.entries(obj)) {
-    if (n >= maxEntries) break
-    if (typeof k !== 'string' || k.length > 12) continue
+    if (!allowedKeys.has(k)) continue
     const rec = cleanRecord(v)
     if (!rec) continue
     out[k] = rec
-    n++
   }
   return out
 }
@@ -101,8 +103,8 @@ export function sanitize(raw) {
     v: STATE_VERSION,
     n: int(raw.n, 0, Number.MAX_SAFE_INTEGER),
     // Bounded by the fact space (~250 records), never by how long the child plays
-    f: cleanBucket(raw.f, 400),
-    s: cleanBucket(raw.s, 60),
+    f: cleanBucket(raw.f, KNOWN_FACT_KEYS),
+    s: cleanBucket(raw.s, KNOWN_STRAND_KEYS),
     e: Array.isArray(raw.e) ? raw.e.filter(x => typeof x === 'string').slice(-20) : [],
     r: Object.fromEntries(OP_KEYS.map(op => [
       op,
@@ -292,7 +294,8 @@ export function clear() {
 
 const SETTINGS_KEY = 'mc_settings'
 const DEFAULT_SETTINGS = {
-  sound: true, character: 'haaland', shootoutOptIn: false, locale: null, pitchTheme: 'auto', customPlayer: null,
+  sound: true, character: 'haaland', shootoutOptIn: false, locale: null,
+  extraTime: 1, rival: null, pitchTheme: 'auto', customPlayer: null,
 }
 
 /**
@@ -320,14 +323,7 @@ export function loadSettings() {
     const raw = store().getItem(SETTINGS_KEY)
     if (!raw) return { ...DEFAULT_SETTINGS }
     const parsed = JSON.parse(raw)
-    return {
-      sound: parsed?.sound !== false,
-      character: typeof parsed?.character === 'string' ? parsed.character : DEFAULT_SETTINGS.character,
-      shootoutOptIn: parsed?.shootoutOptIn === true,
-      locale: typeof parsed?.locale === 'string' ? parsed.locale : null,
-      pitchTheme: THEMES.includes(parsed?.pitchTheme) ? parsed.pitchTheme : 'auto',
-      customPlayer: cleanCustomPlayer(parsed?.customPlayer),
-    }
+    return loadSettingsShape(parsed)
   } catch {
     return { ...DEFAULT_SETTINGS }
   }
@@ -426,15 +422,20 @@ export function importBackup(text) {
 
 /** Shape-check imported settings the same way a normal load would */
 function loadSettingsShape(raw) {
+  const customPlayer = cleanCustomPlayer(raw?.customPlayer)
+  const requestedCharacter = typeof raw?.character === 'string' ? raw.character : DEFAULT_SETTINGS.character
+  const character = ROSTER_IDS.includes(requestedCharacter) || (requestedCharacter === 'custom' && customPlayer)
+    ? requestedCharacter
+    : DEFAULT_SETTINGS.character
   return {
     sound: raw?.sound !== false,
-    character: typeof raw?.character === 'string' ? raw.character : DEFAULT_SETTINGS.character,
+    character,
     shootoutOptIn: raw?.shootoutOptIn === true,
-    locale: typeof raw?.locale === 'string' ? raw.locale : null,
+    locale: typeof raw?.locale === 'string' && LOCALES[raw.locale] ? raw.locale : null,
     extraTime: Number.isFinite(raw?.extraTime) ? Math.min(2, Math.max(1, raw.extraTime)) : 1,
-    rival: typeof raw?.rival === 'string' ? raw.rival : null,
+    rival: RIVAL_IDS.includes(raw?.rival) ? raw.rival : null,
     pitchTheme: THEMES.includes(raw?.pitchTheme) ? raw.pitchTheme : 'auto',
-    customPlayer: cleanCustomPlayer(raw?.customPlayer),
+    customPlayer,
   }
 }
 

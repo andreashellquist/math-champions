@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { getCharacter, shade } from '../game/characters'
+import { t } from '../i18n'
 
 /**
  * One skeleton, every character, every pose.
@@ -116,6 +117,7 @@ export default function Player({
   const hand = keeper ? c.gk.gloves : c.skin
   const handR = keeper ? 7.5 : 5
   const hair = HAIR[c.hair] ?? HAIR.crop
+  const displayName = c.name ?? (c.nameKey ? t(c.nameKey) : id)
 
   const kitFill = `url(#${uid}-kit)`
   const skinFill = `url(#${uid}-skin)`
@@ -132,7 +134,7 @@ export default function Player({
       height={height}
       viewBox="0 0 120 160"
       role="img"
-      aria-label={`${c.name}${keeper ? ', goalkeeper' : ''}`}
+      aria-label={`${displayName}${keeper ? `, ${t('player.goalkeeper')}` : ''}`}
       data-pose={pose}
       data-animate={animate ? 'on' : 'off'}
       style={{ '--breathe': `${c.breathe}s`, transform: facing === 'left' ? 'scaleX(-1)' : undefined }}
