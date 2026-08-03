@@ -42,6 +42,30 @@ export default {
   roster: {
     title: 'Pick your player',
     subtitle: 'Everyone\'s in the squad. Swap as often as you like!',
+    createSelf: '➕ Create your own',
+    editSelf: '✏️ Edit your player',
+  },
+
+  customPlayer: {
+    title: 'Create your player',
+    subtitle: 'Name yourself and choose how you look on the pitch.',
+    previewName: 'You',
+    namePlaceholder: 'Your name',
+    nameLabel: 'Name',
+    hairLabel: 'Hair',
+    hairStyle: {
+      buzz: 'Short',
+      crop: 'Crop',
+      flow: 'Flowing',
+      curls: 'Curly',
+      afro: 'Afro',
+    },
+    hairColorLabel: 'Hair colour',
+    skinLabel: 'Skin tone',
+    kitLabel: 'Kit',
+    numberLabel: 'Shirt number',
+    save: '✓ Save',
+    remove: 'Remove my player',
   },
 
   theme: {

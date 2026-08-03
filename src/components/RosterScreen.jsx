@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { useGame } from '../state/GameContext'
 import { useTranslation } from '../i18n/useTranslation'
-import { ROSTER } from '../game/characters'
+import { ROSTER, buildCustomCharacter } from '../game/characters'
 import { THEMES, PALETTE, resolveTheme } from '../game/theme'
 import Player from './Player'
 
@@ -21,13 +22,22 @@ export default function RosterScreen() {
   const pitchSetting = state.settings.pitchTheme ?? 'auto'
   const activeTheme = resolveTheme(pitchSetting)
 
+  const customCharacter = useMemo(
+    () => buildCustomCharacter(state.settings.customPlayer),
+    [state.settings.customPlayer],
+  )
+  const squad = useMemo(() => {
+    const all = customCharacter ? [...ROSTER, customCharacter] : ROSTER
+    return [...all].sort((a, b) => a.short.localeCompare(b.short, 'sv'))
+  }, [customCharacter])
+
   return (
     <div className="screen">
       <h1 className="title" style={{ fontSize: '1.9rem' }}>{t('roster.title')}</h1>
       <p className="subtitle">{t('roster.subtitle')}</p>
 
       <div className="roster">
-        {ROSTER.map(c => {
+        {squad.map(c => {
           const isSelected = c.id === selected
           return (
             <button
@@ -41,6 +51,7 @@ export default function RosterScreen() {
                   is visual noise and wasted battery */}
               <Player
                 id={c.id}
+                character={c.id === 'custom' ? c : null}
                 pose={isSelected ? 'celebrate' : 'idle'}
                 size={116}
                 animate={isSelected}
@@ -50,6 +61,16 @@ export default function RosterScreen() {
             </button>
           )
         })}
+
+        <button
+          className="roster-card roster-card-create"
+          onClick={() => dispatch({ type: 'NAVIGATE', screen: 'customPlayer' })}
+        >
+          <span className="roster-create-icon" aria-hidden="true">{customCharacter ? '✏️' : '➕'}</span>
+          <span className="roster-name">
+            {t(customCharacter ? 'roster.editSelf' : 'roster.createSelf')}
+          </span>
+        </button>
       </div>
 
       <h2 className="title" style={{ fontSize: '1.4rem', marginTop: 8 }}>{t('theme.title')}</h2>

@@ -4,9 +4,14 @@
  * Stylised cartoon avatars identified by kit colour, hair silhouette and
  * number — recognisable by team and vibe, not likenesses of real people.
  *
- * The roster is deliberately mixed: five men and nothing else gives roughly
- * half the audience nobody to be, and identification is one of the few
- * motivational levers here that costs nothing to provide.
+ * The roster started deliberately mixed — five men and two women, so roughly
+ * half the audience had someone to be — and has since grown lopsided as
+ * players were added one request at a time (Bonmatí and Rolfö are still the
+ * only women). Identification is one of the few motivational levers here
+ * that costs nothing to provide, so that balance is worth restoring the next
+ * time a name goes in. The create-a-player screen (see `buildCustomCharacter`
+ * below) is the backstop regardless: a child who is neither should never be
+ * limited to the squad as given.
  *
  * Every character is available from the first launch and freely swappable.
  * Characters are deliberately NOT unlockable: who you get to be should never
@@ -187,13 +192,102 @@ export const CHARACTERS = {
     },
     gk: GK_DEFAULT,
   },
+
+  pickford: {
+    id: 'pickford', name: 'Jordan Pickford', short: 'Pickford', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    hair: 'buzz', hairColor: '#B5651D', skin: '#F6D9BE',
+    number: 1, celebration: 'zen', breathe: 3.3,
+    kits: {
+      home:   { shirt: '#00369C', accent: '#FFFFFF', pattern: 'solid',
+                shorts: '#FFFFFF', socks: '#00369C', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+      nation: { shirt: '#E31B23', accent: '#FFFFFF', pattern: 'solid',
+                shorts: '#FFFFFF', socks: '#E31B23', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+    },
+    gk: GK_DEFAULT,
+  },
+
+  cubarsi: {
+    id: 'cubarsi', name: 'Pau Cubarsí', short: 'Cubarsí', flag: '🇪🇸',
+    hair: 'crop', hairColor: '#241A14', skin: '#D9A374',
+    number: 4, celebration: 'point', breathe: 3.1,
+    kits: {
+      // Same club and country colours as Yamal — see Foden's note above.
+      home:   { shirt: '#C81B5A', accent: '#004D98', pattern: 'stripes',
+                shorts: '#004D98', socks: '#C81B5A', trim: '#FFE234', numberColor: '#FFE234' },
+      nation: { shirt: '#C60B1E', accent: '#FFC400', pattern: 'solid',
+                shorts: '#1A2A6C', socks: '#C60B1E', trim: '#FFC400', numberColor: '#FFC400' },
+    },
+    gk: GK_DEFAULT,
+  },
 }
 
-export const ROSTER = Object.values(CHARACTERS)
+// Alphabetical by displayed name — the roster grid has no other ordering
+// signal (it isn't grouped by team or unlock order), so name is what a child
+// scans by when they're looking for someone specific.
+export const ROSTER = Object.values(CHARACTERS).sort((a, b) => a.short.localeCompare(b.short, 'sv'))
 export const ROSTER_IDS = ROSTER.map(c => c.id)
 
+/**
+ * Create-a-player: a curated palette rather than a free colour picker.
+ *
+ * A hex wheel can produce combinations that are unreadable against the pitch
+ * or against each other (light number on a light shirt); every option here
+ * is a value already proven to work by an existing squad member, so any
+ * combination a child picks is guaranteed legible.
+ */
+export const HAIR_STYLES = ['buzz', 'crop', 'flow', 'curls', 'afro']
+export const HAIR_COLORS = [
+  '#1A1310', '#241A14', '#4A3624', '#6B5236', '#8C6A3E', '#B8934A', '#D9B450', '#E0A62A',
+]
+export const SKIN_TONES = [
+  '#F6D9BE', '#F4D3B4', '#F2D0AF', '#F7DCC2', '#C89468', '#C08A5C', '#D9A374', '#7A4A2A',
+]
+export const KIT_PRESETS = [
+  { id: 'sky',     shirt: '#9BCFF2', accent: '#1C2C5B', pattern: 'solid',
+                    shorts: '#FFFFFF', socks: '#9BCFF2', trim: '#1C2C5B', numberColor: '#1C2C5B' },
+  { id: 'red',      shirt: '#E31B23', accent: '#FFFFFF', pattern: 'solid',
+                    shorts: '#FFFFFF', socks: '#E31B23', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+  { id: 'yellow',   shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                    shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+  { id: 'claret',   shirt: '#F2E8D5', accent: '#C81B5A', pattern: 'stripes',
+                    shorts: '#004D98', socks: '#C81B5A', trim: '#004D98', numberColor: '#004D98' },
+  { id: 'monochrome', shirt: '#1A1A1A', accent: '#FFFFFF', pattern: 'stripes',
+                    shorts: '#1A1A1A', socks: '#1A1A1A', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+  { id: 'green',    shirt: '#1E7A42', accent: '#FFFFFF', pattern: 'solid',
+                    shorts: '#FFFFFF', socks: '#1E7A42', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+  { id: 'purple',   shirt: '#5A2D82', accent: '#FFE234', pattern: 'solid',
+                    shorts: '#5A2D82', socks: '#5A2D82', trim: '#FFE234', numberColor: '#FFE234' },
+  { id: 'blue',     shirt: '#0057B8', accent: '#FFFFFF', pattern: 'stripes',
+                    shorts: '#FFFFFF', socks: '#0057B8', trim: '#FFFFFF', numberColor: '#FFFFFF' },
+]
+
+/** Turns a sanitised custom-player record into a full character, ready for Player */
+export function buildCustomCharacter(cp) {
+  if (!cp) return null
+  const kit = KIT_PRESETS.find(k => k.id === cp.kitId) ?? KIT_PRESETS[0]
+  return {
+    id: 'custom', name: cp.name, short: cp.name, flag: '🇸🇪',
+    hair: cp.hair, hairColor: cp.hairColor, skin: cp.skin,
+    number: cp.number, celebration: 'arms-wide', breathe: 3.2,
+    kits: { home: kit, nation: kit },
+    gk: GK_DEFAULT,
+  }
+}
+
+// The one piece of runtime-mutable data in this file: a child's own player,
+// rebuilt whenever settings load or change (see GameContext). Everything
+// else here is static, so this is the only thing getCharacter needs a cache
+// for at all.
+let customCharacter = null
+export function setCustomCharacter(customPlayer) {
+  customCharacter = buildCustomCharacter(customPlayer)
+}
+
 /** Rivals are keeper-only characters, but render through the same component */
-export const getCharacter = id => CHARACTERS[id] ?? RIVALS[id] ?? CHARACTERS.haaland
+export function getCharacter(id) {
+  if (id === 'custom' && customCharacter) return customCharacter
+  return CHARACTERS[id] ?? RIVALS[id] ?? CHARACTERS.haaland
+}
 
 /**
  * The opponent keeper: any squad member who isn't the chosen striker.

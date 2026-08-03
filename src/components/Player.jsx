@@ -85,6 +85,8 @@ const FACE_FOR = {
 
 export default function Player({
   id = 'haaland',
+  character = null,        // pass a character object directly to preview one
+                            // that isn't registered yet (the create-a-player form)
   role = 'striker',        // 'striker' | 'keeper'
   pose = 'idle',
   facing = 'right',
@@ -94,7 +96,7 @@ export default function Player({
   className = '',
 }) {
   const uid = useId().replace(/:/g, '')
-  const c = getCharacter(id)
+  const c = character ?? getCharacter(id)
   const keeper = role === 'keeper'
   const kit = keeper
     ? { shirt: c.gk.shirt,

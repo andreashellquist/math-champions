@@ -7,6 +7,7 @@ import GameScreen from './components/GameScreen'
 import ResultScreen from './components/ResultScreen'
 import TrophyScreen from './components/TrophyScreen'
 import RosterScreen from './components/RosterScreen'
+import CustomPlayerScreen from './components/CustomPlayerScreen'
 import MasteryMap from './components/MasteryMap'
 import SeasonScreen from './components/SeasonScreen'
 import ParentView from './components/ParentView'
@@ -20,6 +21,7 @@ const SCREENS = {
   result: ResultScreen,
   trophy: TrophyScreen,
   roster: RosterScreen,
+  customPlayer: CustomPlayerScreen,
   map:    MasteryMap,
   season: SeasonScreen,
 }

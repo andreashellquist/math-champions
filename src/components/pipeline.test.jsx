@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, act } from '@testing-library/react'
+import { render, act, fireEvent } from '@testing-library/react'
 import App from '../App'
-import { __resetStorage, load } from '../game/storage'
+import { __resetStorage, load, loadSettings } from '../game/storage'
 import { setLocale } from '../i18n'
 import { masteredCount } from '../game/mastery'
 
@@ -193,6 +193,52 @@ describe('Snabbskott (arcade), through the real component tree', () => {
     click(button('Välj själv') ?? button('Pick myself'))
     const chip = button('Snabbskott')
     expect(chip.textContent).toMatch(/\d+\s*sek/)   // e.g. "30 sek" — not just a fact count
+  })
+})
+
+describe('create-a-player, through the real component tree', () => {
+  it('names, saves and immediately plays as your own player', () => {
+    render(<App />)
+    click(button('Byt spelare'))
+    click(button('Skapa din egen'))
+
+    const name = document.querySelector('.name-input')
+    fireEvent.change(name, { target: { value: 'Robin' } })
+    click(button('Spara'))
+
+    // Saved to the settings a reload would read back...
+    expect(loadSettings().customPlayer.name).toBe('Robin')
+    expect(loadSettings().character).toBe('custom')
+
+    // ...and selected immediately, no extra tap needed
+    expect(document.querySelector('.roster-card.selected .roster-name')?.textContent).toBe('Robin')
+
+    click(button('Klar'))
+    expect(document.querySelector('.char-label')?.textContent).toMatch(/Robin/)
+  })
+
+  it('refuses to save with no name, so a child can never end up an unlabelled figure', () => {
+    render(<App />)
+    click(button('Byt spelare'))
+    click(button('Skapa din egen'))
+
+    expect(button('Spara').disabled).toBe(true)
+  })
+
+  it('offers to edit, and to remove, a player that already exists', () => {
+    render(<App />)
+    click(button('Byt spelare'))
+    click(button('Skapa din egen'))
+    fireEvent.change(document.querySelector('.name-input'), { target: { value: 'Robin' } })
+    click(button('Spara'))
+
+    click(button('Ändra din spelare'))
+    expect(document.querySelector('.name-input').value).toBe('Robin')
+
+    click(button('Ta bort min spelare'))
+    expect(loadSettings().customPlayer).toBeNull()
+    // Falls back rather than leaving the child on a character that no longer exists
+    expect(loadSettings().character).not.toBe('custom')
   })
 })
 

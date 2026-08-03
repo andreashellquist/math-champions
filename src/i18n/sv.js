@@ -50,6 +50,30 @@ export default {
   roster: {
     title: 'Välj din spelare',
     subtitle: 'Alla är med i truppen. Byt hur ofta du vill!',
+    createSelf: '➕ Skapa din egen',
+    editSelf: '✏️ Ändra din spelare',
+  },
+
+  customPlayer: {
+    title: 'Skapa din spelare',
+    subtitle: 'Namnge dig själv och välj hur du ser ut på planen.',
+    previewName: 'Du',
+    namePlaceholder: 'Ditt namn',
+    nameLabel: 'Namn',
+    hairLabel: 'Hår',
+    hairStyle: {
+      buzz: 'Kort',
+      crop: 'Page',
+      flow: 'Slätt',
+      curls: 'Lockigt',
+      afro: 'Afro',
+    },
+    hairColorLabel: 'Hårfärg',
+    skinLabel: 'Hudton',
+    kitLabel: 'Matchtröja',
+    numberLabel: 'Tröjnummer',
+    save: '✓ Spara',
+    remove: 'Ta bort min spelare',
   },
 
   theme: {

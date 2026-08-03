@@ -329,9 +329,25 @@ child mid-question.
 
 ---
 
+## The squad, and creating your own
+
+The roster (`characters.js`) started deliberately mixed — five men and two
+women, so roughly half the audience had someone to be — and has grown
+lopsided as names were added one request at a time (Bonmatí and Rolfö are
+still the only women; worth another next time one goes in).
+
+The backstop regardless is **create-a-player** (`CustomPlayerScreen.jsx`):
+a name, a hairstyle, a hair colour, a skin tone, a kit and a shirt number, all
+picked from swatches rather than a free colour input. A hex wheel can produce
+a light number on a light shirt or a shirt that's unreadable against the
+pitch; every swatch offered is a value already proven to work by an existing
+squad member, so no combination a child can build comes out illegible. The
+result is stored as a small, strictly-validated record in settings (never
+raw hex or an arbitrary style string — see `cleanCustomPlayer` in
+`storage.js`) and rebuilt into a real character at runtime, so a tampered or
+hand-edited save can only ever fall back to a safe default, never render
+broken.
+
 ## TODO
 
-- [ ] A custom player the child names and kits themselves — the self-reference
-      effect is real, and it is the honest answer for a child who isn't any of
-      the seven
 - [ ] Real cross-device sync, if it is ever worth the account and the server

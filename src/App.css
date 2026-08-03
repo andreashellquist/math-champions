@@ -1151,3 +1151,70 @@ body::before {
   justify-content: center;
 }
 .arcade-chips .link-btn.tiny { margin: 0; }
+
+.btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ── ROSTER: create-a-player tile ─────────── */
+.roster-card-create {
+  justify-content: center;
+}
+.roster-create-icon { font-size: 2.6rem; }
+
+/* ── CREATE-A-PLAYER ───────────────────────── */
+.name-input, .number-input {
+  width: 100%;
+  max-width: 280px;
+  min-height: 52px;
+  margin: 6px 0 4px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  color: #1a3a00;
+}
+.number-input { max-width: 120px; }
+
+.swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 420px;
+  margin-bottom: 6px;
+}
+.swatch-card {
+  padding: 4px;
+  background: rgba(255,255,255,.10);
+  border: 3px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  line-height: 0;
+}
+.swatch-card.selected { border-color: var(--gold); background: rgba(255,255,255,.18); }
+
+.color-swatch {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.4);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.color-swatch.selected { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
+
+.custom-player-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}

@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   load, save, flush, clear, sanitize, __resetStorage,
   weekId, loadWeek, saveWeek, exportBackup, importBackup,
+  loadSettings, saveSettings,
 } from './storage'
 import { emptyState, arcadeKey } from './mastery'
+import { HAIR_STYLES, HAIR_COLORS, SKIN_TONES, KIT_PRESETS } from './characters'
 
 beforeEach(() => {
   localStorage.clear()
@@ -233,6 +235,49 @@ describe('backup — the manual bridge between devices', () => {
     })
     expect(importBackup(future).ok).toBe(true)
     expect(load().agg.correct).toBe(0)          // ignored rather than guessed at
+  })
+})
+
+describe('create-a-player settings', () => {
+  const valid = { name: 'Alex', hair: HAIR_STYLES[1], hairColor: HAIR_COLORS[1], skin: SKIN_TONES[1],
+    kitId: KIT_PRESETS[1].id, number: 7 }
+
+  it('round-trips a valid custom player', () => {
+    saveSettings({ sound: true, character: 'custom', shootoutOptIn: false, locale: null,
+      pitchTheme: 'auto', customPlayer: valid })
+    expect(loadSettings().customPlayer).toEqual(valid)
+  })
+
+  it('treats a blank or missing name as no custom player at all', () => {
+    saveSettings({ customPlayer: { ...valid, name: '   ' } })
+    expect(loadSettings().customPlayer).toBeNull()
+
+    saveSettings({ customPlayer: {} })
+    expect(loadSettings().customPlayer).toBeNull()
+  })
+
+  it('trims a name to 14 characters rather than letting it overflow the roster card', () => {
+    saveSettings({ customPlayer: { ...valid, name: 'A'.repeat(40) } })
+    expect(loadSettings().customPlayer.name).toHaveLength(14)
+  })
+
+  // Every colour/style field is checked against the same curated option list
+  // the form itself offers — a tampered or hand-edited value must fall back
+  // to a safe default rather than render whatever string was stored.
+  it('falls back to a safe default for a hair style, colour or kit not on the curated list', () => {
+    saveSettings({ customPlayer: { ...valid, hair: 'mohawk', hairColor: '#FF00FF', skin: '#00FF00', kitId: 'nonexistent' } })
+    const cp = loadSettings().customPlayer
+    expect(HAIR_STYLES).toContain(cp.hair)
+    expect(HAIR_COLORS).toContain(cp.hairColor)
+    expect(SKIN_TONES).toContain(cp.skin)
+    expect(KIT_PRESETS.some(k => k.id === cp.kitId)).toBe(true)
+  })
+
+  it('clamps the shirt number to 1-99', () => {
+    saveSettings({ customPlayer: { ...valid, number: 0 } })
+    expect(loadSettings().customPlayer.number).toBe(1)
+    saveSettings({ customPlayer: { ...valid, number: 500 } })
+    expect(loadSettings().customPlayer.number).toBe(99)
   })
 })
 

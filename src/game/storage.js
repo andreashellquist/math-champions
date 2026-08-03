@@ -19,6 +19,7 @@ import {
 import { RIVAL_IDS } from './rivals'
 import { THEMES } from './theme'
 import { ARCADE_SETS } from './arcadeSets'
+import { HAIR_STYLES, HAIR_COLORS, SKIN_TONES, KIT_PRESETS } from './characters'
 
 const KEY = 'mc_state'
 const LEGACY_CORRECT = 'mc_correct'
@@ -290,7 +291,29 @@ export function clear() {
 /* ── SETTINGS (small, separate, survives a progress reset) ── */
 
 const SETTINGS_KEY = 'mc_settings'
-const DEFAULT_SETTINGS = { sound: true, character: 'haaland', shootoutOptIn: false, locale: null, pitchTheme: 'auto' }
+const DEFAULT_SETTINGS = {
+  sound: true, character: 'haaland', shootoutOptIn: false, locale: null, pitchTheme: 'auto', customPlayer: null,
+}
+
+/**
+ * The create-a-player record. Every field is validated against the same
+ * curated option lists the form itself offers — never trusted as free-form
+ * hex or an arbitrary hair-style string — so a corrupted or hand-edited
+ * value can only ever fall back to a safe default, never render broken.
+ */
+function cleanCustomPlayer(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const name = typeof raw.name === 'string' ? raw.name.trim().slice(0, 14) : ''
+  if (!name) return null
+  return {
+    name,
+    hair: HAIR_STYLES.includes(raw.hair) ? raw.hair : HAIR_STYLES[0],
+    hairColor: HAIR_COLORS.includes(raw.hairColor) ? raw.hairColor : HAIR_COLORS[0],
+    skin: SKIN_TONES.includes(raw.skin) ? raw.skin : SKIN_TONES[0],
+    kitId: KIT_PRESETS.some(k => k.id === raw.kitId) ? raw.kitId : KIT_PRESETS[0].id,
+    number: int(raw.number, 1, 99, 10),
+  }
+}
 
 export function loadSettings() {
   try {
@@ -303,6 +326,7 @@ export function loadSettings() {
       shootoutOptIn: parsed?.shootoutOptIn === true,
       locale: typeof parsed?.locale === 'string' ? parsed.locale : null,
       pitchTheme: THEMES.includes(parsed?.pitchTheme) ? parsed.pitchTheme : 'auto',
+      customPlayer: cleanCustomPlayer(parsed?.customPlayer),
     }
   } catch {
     return { ...DEFAULT_SETTINGS }
@@ -410,6 +434,7 @@ function loadSettingsShape(raw) {
     extraTime: Number.isFinite(raw?.extraTime) ? Math.min(2, Math.max(1, raw.extraTime)) : 1,
     rival: typeof raw?.rival === 'string' ? raw.rival : null,
     pitchTheme: THEMES.includes(raw?.pitchTheme) ? raw.pitchTheme : 'auto',
+    customPlayer: cleanCustomPlayer(raw?.customPlayer),
   }
 }
 

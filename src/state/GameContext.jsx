@@ -4,7 +4,7 @@ import { load, save, flush, clear, loadSettings, saveSettings } from '../game/st
 import { buildRoundQueue, questionFor } from '../game/round'
 import { suggestOp } from '../game/mastery'
 import { OPS, OP_ORDER } from '../game/config'
-import { keeperFor } from '../game/characters'
+import { keeperFor, setCustomCharacter } from '../game/characters'
 import { rivalFor } from '../game/rivals'
 import { setLocale, DEFAULT_LOCALE } from '../i18n'
 
@@ -20,6 +20,10 @@ export function GameProvider({ children }) {
       // this is a Swedish child's game and an English-configured tablet
       // shouldn't change that. An explicit choice in Settings wins.
       setLocale(settings.locale ?? DEFAULT_LOCALE)
+      // Synchronous, not an effect: if `character` is already 'custom' on a
+      // returning visit, the very first render needs the real player, not one
+      // frame of the Haaland fallback while an effect catches up.
+      setCustomCharacter(settings.customPlayer)
       return initialState(load(), settings)
     },
   )
@@ -36,6 +40,7 @@ export function GameProvider({ children }) {
      rendering, so a setItem inside one can fire twice. */
   useEffect(() => { save(state.mastery) }, [state.mastery])
   useEffect(() => { saveSettings(state.settings) }, [state.settings])
+  useEffect(() => { setCustomCharacter(state.settings.customPlayer) }, [state.settings.customPlayer])
 
   // Don't lose the last round to a closed tab
   useEffect(() => {
