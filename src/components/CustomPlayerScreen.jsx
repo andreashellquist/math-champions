@@ -81,13 +81,13 @@ export default function CustomPlayerScreen() {
 
       <h2 className="title" style={{ fontSize: '1.1rem', marginTop: 10 }}>{t('customPlayer.hairColorLabel')}</h2>
       <div className="swatch-row">
-        {HAIR_COLORS.map(color => (
+        {HAIR_COLORS.map((color, index) => (
           <button
             key={color}
             className={`color-swatch${draft.hairColor === color ? ' selected' : ''}`}
             style={{ background: color }}
             aria-pressed={draft.hairColor === color}
-            aria-label={color}
+            aria-label={t('customPlayer.hairColorChoice', { n: index + 1, total: HAIR_COLORS.length })}
             onClick={() => set('hairColor', color)}
           />
         ))}
@@ -95,13 +95,13 @@ export default function CustomPlayerScreen() {
 
       <h2 className="title" style={{ fontSize: '1.1rem', marginTop: 10 }}>{t('customPlayer.skinLabel')}</h2>
       <div className="swatch-row">
-        {SKIN_TONES.map(color => (
+        {SKIN_TONES.map((color, index) => (
           <button
             key={color}
             className={`color-swatch${draft.skin === color ? ' selected' : ''}`}
             style={{ background: color }}
             aria-pressed={draft.skin === color}
-            aria-label={color}
+            aria-label={t('customPlayer.skinChoice', { n: index + 1, total: SKIN_TONES.length })}
             onClick={() => set('skin', color)}
           />
         ))}
@@ -109,12 +109,12 @@ export default function CustomPlayerScreen() {
 
       <h2 className="title" style={{ fontSize: '1.1rem', marginTop: 10 }}>{t('customPlayer.kitLabel')}</h2>
       <div className="swatch-row">
-        {KIT_PRESETS.map(kit => (
+        {KIT_PRESETS.map((kit, index) => (
           <button
             key={kit.id}
             className={`swatch-card${draft.kitId === kit.id ? ' selected' : ''}`}
             aria-pressed={draft.kitId === kit.id}
-            aria-label={kit.id}
+            aria-label={t('customPlayer.kitChoice', { n: index + 1, total: KIT_PRESETS.length })}
             onClick={() => set('kitId', kit.id)}
           >
             <Player

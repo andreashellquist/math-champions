@@ -54,13 +54,13 @@ export default function GameScreen() {
   useTranslation()   // re-render on locale change
   const r = state.round
   const [confettiKey, setConfettiKey] = useState(0)
-  const [urgency, setUrgency] = useState(0)
   const [line, setLine] = useState(null)
   const [keyboardSeen, setKeyboardSeen] = useState(false)
-  const [typed, setTyped] = useState('')
+  const [typedInput, setTypedInput] = useState({ kickIdx: -1, value: '' })
   const questionRef = useRef(null)
   const skipArmedAt = useRef(null)
   const extendedRef = useRef(false)
+  const announcedUrgencyRef = useRef(0)
 
   /* Every timeout goes through here so they can all be cancelled on unmount.
      The old code created four bare setTimeouts per kick with no handles, so
@@ -79,6 +79,7 @@ export default function GameScreen() {
 
   const shootout = r?.mode === 'shootout' && !r?.clockOff
   const arcade = r?.mode === 'arcade'
+  const legend = r?.mode === 'legend'
   const reduced = prefersReducedMotion()
 
   /* ── Clock (shootout: per-kick. arcade: one clock for the whole round) ── */
@@ -107,30 +108,52 @@ export default function GameScreen() {
     generation: arcade ? 'arcade' : (r?.kickIdx ?? 0),
   })
 
-  /* Two discrete urgency marks rather than a per-second tick. Arcade skips the
-     tone (the item beats are already a steady stream of clicks/thuds) but
-     keeps the same non-red visual ramp. */
-  useEffect(() => {
-    if (!(shootout || arcade) || secondsLeft == null || !r?.timerMs) { setUrgency(0); return }
-    const frac = (secondsLeft * 1000) / r.timerMs
-    if (frac <= 0.2 && urgency < 2) { setUrgency(2); if (!arcade) sfx.urgent2() }
-    else if (frac <= 0.4 && urgency < 1) { setUrgency(1); if (!arcade) sfx.urgent1() }
-  }, [secondsLeft, shootout, arcade, r?.timerMs, urgency])
+  const clockFraction = (secondsLeft != null && r?.timerMs)
+    ? (secondsLeft * 1000) / r.timerMs
+    : 1
+  const urgency = !(shootout || arcade) || secondsLeft == null || !r?.timerMs
+    ? 0
+    : clockFraction <= 0.2 ? 2 : clockFraction <= 0.4 ? 1 : 0
 
-  useEffect(() => { setUrgency(0); extendedRef.current = false; setTyped('') }, [r?.kickIdx])
+  /* Two discrete urgency tones, with the visual state derived directly from
+     the deadline rather than mirrored through another piece of React state. */
+  useEffect(() => {
+    if (arcade) { announcedUrgencyRef.current = urgency; return }
+    if (urgency > announcedUrgencyRef.current) {
+      if (urgency === 2) sfx.urgent2()
+      else if (urgency === 1) sfx.urgent1()
+    }
+    announcedUrgencyRef.current = urgency
+  }, [arcade, urgency])
+
+  useEffect(() => {
+    announcedUrgencyRef.current = 0
+    extendedRef.current = false
+  }, [r?.kickIdx])
 
   /* The rival greets at kick-off and applauds a goal — and says nothing at all
      when the child misses. See game/banter.js. */
+  const roundMode = r?.mode
+  const roundPhase = r?.phase
+  const kickIdx = r?.kickIdx
+  const attempt = r?.attempt
+  const lastResult = r?.results.at(-1)
   useEffect(() => {
-    if (!r || r.mode !== 'fixture') { setLine(null); return }
-    if (r.phase === 'asking' && r.kickIdx === 0 && r.attempt === 1) {
+    if (roundMode !== 'fixture') {
+      // Banter is event-driven presentation state; clearing it when leaving a
+      // fixture is intentional synchronization with the round state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLine(null)
+      return
+    }
+    if (roundPhase === 'asking' && kickIdx === 0 && attempt === 1) {
       setLine(banter('greet', rival))
-    } else if (r.phase === 'celebrating' && r.results.at(-1) !== 'miss') {
+    } else if (roundPhase === 'celebrating' && lastResult !== 'miss') {
       setLine(banter('beaten', rival))
-    } else if (r.phase === 'asking') {
+    } else if (roundPhase === 'asking') {
       setLine(null)
     }
-  }, [r?.phase, r?.kickIdx, r?.mode, rival])
+  }, [roundPhase, kickIdx, roundMode, attempt, lastResult, rival])
 
   /* ── Kick resolution ───────────────────────────────────── */
 
@@ -152,6 +175,31 @@ export default function GameScreen() {
       }, reduced ? 80 : BEATS.arcadeFlight)
       schedule(advance, reduced ? 250 : (scored ? BEATS.arcadeHit : BEATS.arcadeMiss))
       skipArmedAt.current = null   // pace is already fast; tap-to-skip would only misfire
+      return
+    }
+
+    if (r.mode === 'legend') {
+      const finalTouch = r.kickIdx >= (r.totalKicks ?? 5) - 1
+      const choicePoint = r.kickIdx === 0 || r.kickIdx === 2
+      const recovered = ['recovery', 'recovery-goal'].includes(r.results.at(-1))
+      const flight = reduced ? 100 : BEATS.resolve
+
+      schedule(() => {
+        if (finalTouch) {
+          sfx.goal()
+          setConfettiKey(k => k + 1)
+        } else if (recovered) sfx.thud()
+        else sfx.click()
+        dispatch({ type: 'CELEBRATE' })
+      }, flight)
+
+      schedule(
+        choicePoint
+          ? () => dispatch({ type: 'SHOW_LEGEND_CHOICE' })
+          : advance,
+        reduced ? 650 : BEATS.next,
+      )
+      skipArmedAt.current = null
       return
     }
 
@@ -241,6 +289,7 @@ export default function GameScreen() {
   if (!r) return null
 
   const { question, phase } = r
+  const typed = typedInput.kickIdx === r.kickIdx ? typedInput.value : ''
   const accepting = phase === 'asking' || phase === 'rebound' || phase === 'reveal'
 
   function handleTap(value) {
@@ -277,7 +326,7 @@ export default function GameScreen() {
   // Arcade's beats are already close to the skip floor, so tap-to-skip is
   // never armed for it (see the resolution effect) — don't advertise an
   // affordance that would silently do nothing.
-  const skippable = (phase === 'resolving' || phase === 'celebrating') && r.mode !== 'arcade'
+  const skippable = (phase === 'resolving' || phase === 'celebrating') && !arcade && !legend
 
   function answerState(opt) {
     // Arcade never enters `reveal`/`rebound` — a miss still resolves through
@@ -306,20 +355,28 @@ export default function GameScreen() {
         <span className="op-label">
           {OPS[r.op].icon}
           {r.mode === 'fixture' && <em className="derby-tag">vs {t(rival.nameKey)}</em>}
+          {legend && <em className="derby-tag">{t('legend.title')}</em>}
         </span>
         {/* Arcade's queue is a hundred-odd tiled items long — dots would be
             noise. A live count is the only progress marker that means
             anything when the clock, not the queue, ends the round. */}
         {arcade && (
-          <span className="arcade-score" aria-live="polite">
-            {t('arcade.liveScore', { n: r.goals })}
-          </span>
+          <>
+            <span className="arcade-score" aria-label={t('arcade.liveScore', { n: r.goals })}>
+              {t('arcade.liveScore', { n: r.goals })}
+            </span>
+            <span className="sr-only" aria-live="polite">
+              {r.goals > 0 && r.goals % 5 === 0 ? t('arcade.liveScore', { n: r.goals }) : ''}
+            </span>
+          </>
         )}
         {!arcade && (
           <div
             className="kick-dots"
             role="img"
-            aria-label={t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
+            aria-label={legend
+              ? t('legend.progress', { n: r.kickIdx + 1, total: totalKicks })
+              : t('game.dotsLabel', { n: r.kickIdx + 1, total: totalKicks, results: describeDots(r.results) })}
           >
             {r.mode !== 'gate' && Array.from({ length: Math.max(totalKicks, r.results.length) }, (_, i) => (
               <div
@@ -339,12 +396,24 @@ export default function GameScreen() {
 
       {/* Pitch */}
       <div
-        className={`stage${phase === 'celebrating' && r.results.at(-1) !== 'miss' ? ' shake' : ''}`}
+        className={`stage${phase === 'celebrating' && r.results.at(-1) !== 'miss' && (!legend || r.kickIdx >= totalKicks - 1) ? ' shake' : ''}`}
         onClick={skipAhead}
         role={skippable ? 'button' : undefined}
         tabIndex={skippable ? 0 : undefined}
         aria-label={skippable ? t('game.tapNext') : undefined}
       >
+        {legend ? (
+          <LegendPitch
+            kickIdx={r.kickIdx}
+            total={r.totalKicks}
+            phase={phase}
+            route={r.legendRoute}
+            keeperId={keeperId}
+            reduced={reduced}
+            theme={resolveTheme(state.settings.pitchTheme)}
+          />
+        ) : (
+          <>
         {/* The clock is tappable in Shootout: adding time was keyboard-only,
             so on a tablet the only option was removing the clock entirely —
             an all-or-nothing choice where a graded one already existed in the
@@ -365,9 +434,24 @@ export default function GameScreen() {
             or frozen bar would be a visible lie about a mode whose entire
             point is that nothing is timed. */}
         {arcade && r.timerMs && (
-          <div className="shot-clock" data-urgency={urgency} aria-hidden="true">
+          <div
+            className="shot-clock"
+            data-urgency={urgency}
+            role="timer"
+            aria-label={t('arcade.timeRemaining', { s: secondsLeft ?? 0 })}
+            aria-valuemin={0}
+            aria-valuemax={r.timerMs / 1000}
+            aria-valuenow={secondsLeft ?? 0}
+          >
             <div className="shot-clock-fill" ref={barRef} />
           </div>
+        )}
+        {arcade && r.timerMs && (
+          <span className="sr-only" aria-live="polite">
+            {secondsLeft === Math.ceil(r.timerMs / 1000) || [30, 10, 5].includes(secondsLeft)
+              ? t('arcade.timeRemaining', { s: secondsLeft })
+              : ''}
+          </span>
         )}
 
         <div className="pitch-scene">
@@ -393,7 +477,28 @@ export default function GameScreen() {
           <div className="penalty-spot" />
           {skippable && <span className="skip-hint">{t('game.tapNext')}</span>}
         </div>
+          </>
+        )}
       </div>
+
+      {legend && phase === 'route-choice' && (
+        <div className="legend-choice" role="group" aria-labelledby="legend-choice-title">
+          <h2 id="legend-choice-title">{t('legend.choose')}</h2>
+          <div>
+            {(r.legendRoute?.length ?? 0) === 0 ? (
+              <>
+                <button className="btn btn-white" onClick={() => advance({ legendRoute: 'inside' })}>{t('legend.inside')}</button>
+                <button className="btn btn-white" onClick={() => advance({ legendRoute: 'wide' })}>{t('legend.wide')}</button>
+              </>
+            ) : (
+              <>
+                <button className="btn btn-white" onClick={() => advance({ legendRoute: 'one-two' })}>{t('legend.oneTwo')}</button>
+                <button className="btn btn-white" onClick={() => advance({ legendRoute: 'carry' })}>{t('legend.carry')}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {line && <p className="banter">{line}</p>}
 
@@ -428,10 +533,13 @@ export default function GameScreen() {
                 key={d}
                 className="key"
                 disabled={!accepting}
-                onClick={() => setTyped(v => (v + d).slice(0, 3))}
+                onClick={() => setTypedInput(prev => ({
+                  kickIdx: r.kickIdx,
+                  value: `${prev.kickIdx === r.kickIdx ? prev.value : ''}${d}`.slice(0, 3),
+                }))}
               >{d}</button>
             ))}
-            <button className="key key-wide" disabled={!accepting} onClick={() => setTyped('')}>
+            <button className="key key-wide" disabled={!accepting} onClick={() => setTypedInput({ kickIdx: r.kickIdx, value: '' })}>
               ⌫
             </button>
             <button
@@ -490,7 +598,45 @@ export default function GameScreen() {
         </div>
       )}
 
-      <Confetti trigger={confettiKey} />
+      <Confetti key={confettiKey} trigger={confettiKey} />
+    </div>
+  )
+}
+
+function LegendPitch({ kickIdx, total, phase, route = [], keeperId, reduced, theme }) {
+  const positions = [10, 27, 45, 63, 78]
+  const progress = positions[Math.min(kickIdx, positions.length - 1)]
+  const active = phase === 'resolving' || phase === 'celebrating'
+  const finalTouch = kickIdx >= total - 1
+  const lane = route[0] === 'wide' ? 'wide' : route[0] === 'inside' ? 'inside' : 'centre'
+
+  return (
+    <div
+      className={`legend-pitch lane-${lane}${active ? ' active' : ''}`}
+      style={{ '--legend-progress': `${progress}%` }}
+    >
+      <SeasonalDecoration theme={theme} />
+      <div className="legend-progress-label">{t('legend.progress', { n: kickIdx + 1, total })}</div>
+      <div className="legend-route-line" aria-hidden="true" />
+      <div className="legend-defender defender-one" aria-hidden="true" />
+      <div className="legend-defender defender-two" aria-hidden="true" />
+      <div className="legend-defender defender-three" aria-hidden="true" />
+      <div className="legend-runner">
+        <Player
+          id="nova"
+          pose={finalTouch && phase === 'celebrating' ? 'celebrate' : active ? 'kick' : 'idle'}
+          size={72}
+          animate={!reduced}
+        />
+      </div>
+      <div className="legend-ball" aria-hidden="true">⚽</div>
+      {finalTouch && (
+        <div className="legend-goal">
+          <Goal width={126}>
+            <Player id={keeperId} role="keeper" pose={active ? 'beaten' : 'ready'} size={58} facing="left" animate={!reduced} />
+          </Goal>
+        </div>
+      )}
     </div>
   )
 }
@@ -508,6 +654,19 @@ function buildFeedback(r) {
     // before it could be — so arcade stays silent except for the one line
     // that matters: a heads-up before the last ball, never a jarring cut.
     if (r.arcadeExpiring && r.phase === 'asking') return { type: 'timeout', text: t('arcade.lastBall') }
+    return { type: '', text: '' }
+  }
+
+  if (r.mode === 'legend') {
+    if (r.phase === 'rebound') return { type: 'rebound', text: t('game.parried') }
+    if (r.phase === 'reveal') return { type: 'reveal', text: t('game.reveal', { ans: r.question.ans }) }
+    if (r.phase === 'route-choice') return { type: 'goal', text: t('legend.choose') }
+    if (r.phase === 'resolving' || r.phase === 'celebrating') {
+      const finalTouch = r.kickIdx >= (r.totalKicks ?? 5) - 1
+      if (finalTouch) return { type: 'goal', text: t('legend.finish') }
+      if (last === 'recovery') return { type: 'rebound', text: t('legend.recovery') }
+      return { type: 'goal', text: t('legend.touch') }
+    }
     return { type: '', text: '' }
   }
 
@@ -535,6 +694,9 @@ function describeDots(results) {
   if (!results.length) return t('game.noKicks')
   return results
     .map(x => (x === 'miss' ? t('game.resultMiss')
-      : x === 'rebound' ? t('game.resultRebound') : t('game.resultGoal')))
+      : x === 'rebound' ? t('game.resultRebound')
+      : x === 'touch' ? t('legend.touch')
+      : x === 'recovery' || x === 'recovery-goal' ? t('legend.recovery')
+      : t('game.resultGoal')))
     .join(', ')
 }

@@ -19,6 +19,7 @@ export default function ResultScreen() {
   const stars = '⭐'.repeat(rating.stars) + '☆'.repeat(3 - rating.stars)
   const rebounds = r.results.filter(x => x === 'rebound').length
   const retakes = r.results.filter(x => x === 'timeout-goal').length
+  const legendFirstTry = r.results.filter(x => x === 'touch' || x === 'goal').length
   const manyTimeouts = r.timeouts >= 3
 
   const stoppedEarly = r.stoppedEarly || r.results.length < (r.totalKicks ?? 5)
@@ -26,6 +27,14 @@ export default function ResultScreen() {
   const missedLabels = [...new Set(r.missedKeys ?? [])].slice(0, 6).map(labelForKey)
 
   const replay = () => {
+    // Legenddraget is one authored five-touch sequence. A low goal count is
+    // intentional here, so the normal "shorter retry after a hard round"
+    // rule must not shrink it to three touches.
+    if (r.mode === 'legend') {
+      startRound('addition', { mode: 'legend', kicks: 5 })
+      return
+    }
+
     // Snabbskott restarts itself: same set, same duration — specifically
     // *this run's own* duration (`r.timerMs`), not a global default. A child
     // who picked 30s and taps "again" must get 30s again, or the restart
@@ -66,7 +75,11 @@ export default function ResultScreen() {
         {/* No sad face for a low score. The moment a child is most exposed is
             not the moment to put a 😅 on the screen. */}
         <div className="result-figure">
-          <Player id={state.settings.character} pose={goals >= 3 ? 'celebrate' : 'idle'} size={92} />
+          <Player
+            id={r.mode === 'legend' ? 'nova' : state.settings.character}
+            pose={r.mode === 'legend' || goals >= 3 ? 'celebrate' : 'idle'}
+            size={92}
+          />
         </div>
 
         {r.mode === 'arcade' ? (
@@ -123,6 +136,21 @@ export default function ResultScreen() {
                 <p className="result-footnote">{t('arcade.checkNext')}</p>
                 <ul className="gate-missed">
                   {missedLabels.slice(0, 3).map(l => <li key={l}>{l}</li>)}
+                </ul>
+              </>
+            )}
+          </>
+        ) : r.mode === 'legend' && !stoppedEarly ? (
+          <>
+            <h2 className="result-title">{t('legend.completed')}</h2>
+            <div className="result-score">⚽</div>
+            <p className="result-msg">{t('legend.completedMsg')}</p>
+            <p className="result-footnote">{t('legend.firstTry', { n: legendFirstTry })}</p>
+            {missedLabels.length > 0 && (
+              <>
+                <p className="result-footnote">{t('legend.practiceNext')}</p>
+                <ul className="gate-missed">
+                  {missedLabels.map(label => <li key={label}>{label}</li>)}
                 </ul>
               </>
             )}
@@ -225,7 +253,7 @@ export default function ResultScreen() {
 
       {/* Arcade saves the full celebration for an actual personal best — at
           typical arcade scores, "goals >= 4" would fire on nearly every run. */}
-      {(r.mode === 'arcade' ? r.arcadeTierResult === 'best' : goals >= 4) && (
+      {(r.mode === 'arcade' ? r.arcadeTierResult === 'best' : r.mode === 'legend' ? !stoppedEarly : goals >= 4) && (
         <Confetti trigger={1} count={40} />
       )}
     </div>

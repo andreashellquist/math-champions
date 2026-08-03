@@ -34,8 +34,18 @@ describe('sanitize', () => {
   })
 
   it('drops malformed records instead of throwing', () => {
-    const s = sanitize({ f: { good: [1, 2, 3, 4], bad: 'nope', worse: null } })
-    expect(Object.keys(s.f)).toEqual(['good'])
+    const s = sanitize({ f: { 'a3.4': [1, 2, 3, 4], 'a3.5': 'nope', 'a3.6': null } })
+    expect(Object.keys(s.f)).toEqual(['a3.4'])
+  })
+
+  it('drops unknown fact and strand keys before they can crowd out real progress', () => {
+    const unknown = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`fake${i}`, [5, 1, 1, 1]]))
+    const s = sanitize({
+      f: { ...unknown, 'a3.4': [2, 15, 1, 0] },
+      s: { invented: [5, 1, 1, 1], A4: [3, 12, 1, 0] },
+    })
+    expect(s.f).toEqual({ 'a3.4': [2, 15, 1, 0] })
+    expect(s.s).toEqual({ A4: [3, 12, 1, 0] })
   })
 
   it('caps the error ring buffer — the only structure that could grow forever', () => {
@@ -246,6 +256,14 @@ describe('create-a-player settings', () => {
     saveSettings({ sound: true, character: 'custom', shootoutOptIn: false, locale: null,
       pitchTheme: 'auto', customPlayer: valid })
     expect(loadSettings().customPlayer).toEqual(valid)
+  })
+
+  it('rejects unknown characters, locales and rivals while preserving valid accessibility settings', () => {
+    saveSettings({ character: 'made-up', locale: 'xx', rival: 'made-up', extraTime: 99 })
+    expect(loadSettings()).toMatchObject({ character: 'haaland', locale: null, rival: null, extraTime: 2 })
+
+    saveSettings({ character: 'custom', customPlayer: null, extraTime: 1.3, rival: 'white_wall' })
+    expect(loadSettings()).toMatchObject({ character: 'haaland', extraTime: 1.3, rival: 'white_wall' })
   })
 
   it('treats a blank or missing name as no custom player at all', () => {

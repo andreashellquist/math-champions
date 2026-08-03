@@ -72,6 +72,10 @@ export function useDeadline({ durationMs, running, onExpire, onAutoPause, genera
   useEffect(() => {
     clearTimer()
     pausedAtRef.current = null
+    // These values mirror the newly armed external timer. Resetting them in
+    // this synchronization effect is intentional; deferring a frame would
+    // expose the previous question's clock to assistive technology.
+    /* eslint-disable react-hooks/set-state-in-effect */
     setPaused(false)
 
     if (!durationMs || !running) {
@@ -86,6 +90,7 @@ export function useDeadline({ durationMs, running, onExpire, onAutoPause, genera
     syncBar()
     schedule()
     return clearTimer
+    /* eslint-enable react-hooks/set-state-in-effect */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generation, durationMs, running])
 

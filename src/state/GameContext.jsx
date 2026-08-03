@@ -80,7 +80,7 @@ export function GameProvider({ children }) {
   )
 
   /** Move to the next kick, building its question from the round queue */
-  const advance = useCallback(() => {
+  const advance = useCallback((meta = {}) => {
     const r = state.round
     if (!r) return
     const nextIdx = r.kickIdx + 1
@@ -107,6 +107,7 @@ export function GameProvider({ children }) {
       question: fact ? questionFor(state.mastery, fact, { mode: r.mode }) : null,
       rivalId: rival.id,
       extraQueue,
+      legendRoute: meta.legendRoute,
       at: Date.now(),
     })
   }, [state.round, state.mastery, rival])

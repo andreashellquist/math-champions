@@ -3,6 +3,7 @@ import { GameProvider, useGame } from './state/GameContext'
 import { installAudioUnlock, setSoundEnabled } from './audio/sfx'
 import MenuScreen from './components/MenuScreen'
 import ModeSelect from './components/ModeSelect'
+import ArcadeSelect from './components/ArcadeSelect'
 import GameScreen from './components/GameScreen'
 import ResultScreen from './components/ResultScreen'
 import TrophyScreen from './components/TrophyScreen'
@@ -17,6 +18,7 @@ import { resolveTheme } from './game/theme'
 const SCREENS = {
   menu:   MenuScreen,
   mode:   ModeSelect,
+  arcade: ArcadeSelect,
   game:   GameScreen,
   result: ResultScreen,
   trophy: TrophyScreen,
@@ -56,7 +58,7 @@ function Shell() {
   return (
     <>
       <Screen />
-      <UnlockToast message={showToast ? state.toast : null} />
+      <UnlockToast key={showToast ? state.toast : 'no-toast'} message={showToast ? state.toast : null} />
     </>
   )
 }

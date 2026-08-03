@@ -56,6 +56,13 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers() })
 
 describe('a whole kick, through the real tree', () => {
+  it('gives the season rival a real accessible name', () => {
+    render(<App />)
+    const seasonKeeper = document.querySelector('.season-strip [role="img"]')
+    expect(seasonKeeper?.getAttribute('aria-label')).not.toMatch(/undefined/)
+    expect(seasonKeeper?.getAttribute('aria-label')).toMatch(/målvakt/)
+  })
+
   it('goes menu → question → goal → next question', () => {
     startRound()
     const first = q()
@@ -172,9 +179,13 @@ describe('Snabbskott (arcade), through the real component tree', () => {
   it('does not end after five answers — the clock is what ends an arcade round', () => {
     render(<App />)                          // fresh profile lands on the menu
     click(button('Välj själv') ?? button('Pick myself'))
-    // Addition is unlocked from a fresh profile, so its arcade chip is reachable
+    // Addition is unlocked from a fresh profile, so its arcade entry is reachable
     click(button('Snabbskott'))
+    click(button('30 sek'))
     expect(q()).toBeTruthy()
+    const timer = document.querySelector('[role="timer"]')
+    expect(timer?.getAttribute('aria-label')).toMatch(/sekunder kvar/)
+    expect(timer?.getAttribute('aria-valuemax')).toBe('30')
 
     for (let i = 0; i < 8; i++) {
       const before = q()
@@ -191,8 +202,29 @@ describe('Snabbskott (arcade), through the real component tree', () => {
   it('publishes the duration on the chip before the child commits', () => {
     render(<App />)
     click(button('Välj själv') ?? button('Pick myself'))
-    const chip = button('Snabbskott')
+    click(button('Snabbskott'))
+    const chip = button('30 sek')
     expect(chip.textContent).toMatch(/\d+\s*sek/)   // e.g. "30 sek" — not just a fact count
+  })
+
+  it('exposes the full set when the catalog defines one', () => {
+    render(<App />)
+    click(button('Välj själv'))
+    click(button('Snabbskott'))
+    expect(document.body.textContent).toContain('Hela tabellen')
+  })
+})
+
+describe('Legenddraget prototype, through the real component tree', () => {
+  it('starts as an untimed five-touch move with the fictional player', () => {
+    render(<App />)
+    click(button('Välj själv'))
+    click(button('Starta draget'))
+
+    expect(document.querySelector('.legend-pitch')).toBeTruthy()
+    expect(document.querySelectorAll('.dot')).toHaveLength(5)
+    expect(document.querySelector('[role="timer"]')).toBeNull()
+    expect(document.querySelector('.legend-pitch [aria-label="Nova"]')).toBeTruthy()
   })
 })
 
