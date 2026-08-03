@@ -5,13 +5,12 @@
  * number — recognisable by team and vibe, not likenesses of real people.
  *
  * The roster started deliberately mixed — five men and two women, so roughly
- * half the audience had someone to be — and has since grown lopsided as
- * players were added one request at a time (Bonmatí and Rolfö are still the
- * only women). Identification is one of the few motivational levers here
- * that costs nothing to provide, so that balance is worth restoring the next
- * time a name goes in. The create-a-player screen (see `buildCustomCharacter`
- * below) is the backstop regardless: a child who is neither should never be
- * limited to the squad as given.
+ * half the audience had someone to be — and has grown lopsided as players
+ * were added one request at a time; still worth an eye each time a name goes
+ * in, rather than assumed fixed by whatever the count happens to be today.
+ * The create-a-player screen (see `buildCustomCharacter` below) is the
+ * backstop regardless: a child who isn't anyone here should never be limited
+ * to the squad as given.
  *
  * Every character is available from the first launch and freely swappable.
  * Characters are deliberately NOT unlockable: who you get to be should never
@@ -218,6 +217,32 @@ export const CHARACTERS = {
                 shorts: '#1A2A6C', socks: '#C60B1E', trim: '#FFC400', numberColor: '#FFC400' },
     },
     gk: GK_DEFAULT,
+  },
+
+  holmberg: {
+    id: 'holmberg', name: 'Smilla Holmberg', short: 'Smilla', flag: '🇸🇪',
+    hair: 'flow', hairColor: '#D9B450', skin: '#F7DCC2',
+    number: 19, celebration: 'point', breathe: 3.2,
+    kits: {
+      home:   { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: { ...GK_DEFAULT, shirt: '#B9F73E', socks: '#B9F73E' },
+  },
+
+  asllani: {
+    id: 'asllani', name: 'Kosovare Asllani', short: 'Asllani', flag: '🇸🇪',
+    hair: 'flow', hairColor: '#2A1D16', skin: '#C89468',
+    number: 7, celebration: 'arms-wide', breathe: 3.0,
+    kits: {
+      home:   { shirt: '#FB0F0C', accent: '#1A1A1A', pattern: 'stripes',
+                shorts: '#FFFFFF', socks: '#1A1A1A', trim: '#1A1A1A', numberColor: '#FFFFFF' },
+      nation: { shirt: '#FECC02', accent: '#005293', pattern: 'solid',
+                shorts: '#005293', socks: '#FECC02', trim: '#005293', numberColor: '#005293' },
+    },
+    gk: { ...GK_DEFAULT, shirt: '#B9F73E', socks: '#B9F73E' },
   },
 }
 
